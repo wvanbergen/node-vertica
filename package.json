@@ -1,0 +1,12 @@
+{
+  "name": "vertica",
+  "version": "0.0.1",
+  "description": "Pure Javascript client library for Vertica Systems",
+  "author": "Willem van Bergen <willem@shopify.com>",
+  "devDependencies": {
+    "coffee-script": ">= 1.1.1",
+    "vows": "0.5.x"
+  },
+  "main": "./lib/vertica",
+  "engine": "node >= 0.4.9"
+}
