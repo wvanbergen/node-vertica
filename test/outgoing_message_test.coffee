@@ -1,12 +1,15 @@
 vows    = require 'vows'
 assert  = require 'assert'
-Message = require ('../lib/vertica/message')
 
-vow = vows.describe('Message')
+Buffer          = require('../lib/vertica/buffer').Buffer
+OutgoingMessage = require('../lib/vertica/outgoing_message')
+Authentication  = require('../lib/vertica/authentication')
 
-vow.addBatch "Client":
+vow = vows.describe('OutgoingMessage')
+
+vow.addBatch
   "Startup message":
-    topic: -> new Message.Client.Startup('username', 'database')
+    topic: -> new OutgoingMessage.Startup('username', 'database')
 
     "it should hold the message's information": (topic) ->
       assert.equal topic.user,     'username'
@@ -20,7 +23,7 @@ vow.addBatch "Client":
       
 
   "CancelRequest message":
-    topic: -> new Message.Client.CancelRequest(123, 456)
+    topic: -> new OutgoingMessage.CancelRequest(123, 456)
 
     "it should hold the correct information": (topic) ->
       assert.equal topic.backendPid, 123
@@ -33,7 +36,7 @@ vow.addBatch "Client":
       
   "Describe message":
     'Portal description':
-      topic: -> new Message.Client.Describe('portal', 'name')
+      topic: -> new OutgoingMessage.Describe('portal', 'name')
     
       "it should hold the correct information": (topic) ->
         assert.equal topic.type, 80
@@ -44,7 +47,7 @@ vow.addBatch "Client":
         assert.deepEqual topic.toBuffer(), reference
     
     'Prepared statement description':
-      topic: -> new Message.Client.Describe('statement', 'name')
+      topic: -> new OutgoingMessage.Describe('statement', 'name')
 
       "it should hold the correct information": (topic) ->
         assert.equal topic.type, 83
@@ -56,7 +59,7 @@ vow.addBatch "Client":
 
   "Close message":
     'closing a portal':
-      topic: -> new Message.Client.Close('portal', 'name')
+      topic: -> new OutgoingMessage.Close('portal', 'name')
 
       "it should hold the correct information": (topic) ->
         assert.equal topic.type, 80
@@ -67,7 +70,7 @@ vow.addBatch "Client":
         assert.deepEqual topic.toBuffer(), reference
 
     'closing a prepared statement':
-      topic: -> new Message.Client.Close('statement', 'name')
+      topic: -> new OutgoingMessage.Close('statement', 'name')
 
       "it should hold the correct information": (topic) ->
         assert.equal topic.type, 83
@@ -79,7 +82,7 @@ vow.addBatch "Client":
 
 
   "Query message":
-    topic: -> new Message.Client.Query("SELECT * FROM table")
+    topic: -> new OutgoingMessage.Query("SELECT * FROM table")
   
     "it should hold the SQL query": (topic) ->
       assert.equal topic.sql, "SELECT * FROM table"
@@ -89,7 +92,7 @@ vow.addBatch "Client":
       assert.deepEqual topic.toBuffer(), reference
 
   "Parse message":
-    topic: -> new Message.Client.Parse("test", "SELECT * FROM table", [1, 2, 3])
+    topic: -> new OutgoingMessage.Parse("test", "SELECT * FROM table", [1, 2, 3])
       
     "it should hold the name, query and parameter types": (topic) ->
       assert.equal topic.name, "test"
@@ -102,7 +105,7 @@ vow.addBatch "Client":
       assert.deepEqual topic.toBuffer(), reference
   
   "Bind message":
-    topic: -> new Message.Client.Bind("portal", "prep", ["hello", "world", 123])
+    topic: -> new OutgoingMessage.Bind("portal", "prep", ["hello", "world", 123])
     
     "it should hold the portal, prepared statement name and parameter values": (topic) ->
       assert.equal topic.portal, "portal"
@@ -123,7 +126,7 @@ vow.addBatch "Client":
       ])
 
   "Flush message":
-    topic: -> new Message.Client.Flush
+    topic: -> new OutgoingMessage.Flush
 
     "it should encode the message correctly": (topic) -> 
       reference = new Buffer([72, 0, 0, 0, 4])
@@ -131,7 +134,7 @@ vow.addBatch "Client":
 
 
   "Execute message":
-    topic: -> new Message.Client.Execute('portal', 100)
+    topic: -> new OutgoingMessage.Execute('portal', 100)
     
     "it should hold portal name and maximum number of rows": (topic) ->
       assert.equal topic.portal, 'portal'
@@ -143,7 +146,7 @@ vow.addBatch "Client":
 
 
   "Sync message":
-    topic: -> new Message.Client.Sync
+    topic: -> new OutgoingMessage.Sync
 
     "it should encode the message correctly": (topic) -> 
       reference = new Buffer([83, 0, 0, 0, 4])
@@ -151,7 +154,7 @@ vow.addBatch "Client":
 
 
   "Terminate message":
-    topic: -> new Message.Client.Terminate
+    topic: -> new OutgoingMessage.Terminate
 
     "it should encode the message correctly": (topic) -> 
       reference = new Buffer([88, 0, 0, 0, 4])
@@ -159,21 +162,21 @@ vow.addBatch "Client":
 
 
   "SSLRequest message":
-    topic: -> new Message.Client.SSLRequest
+    topic: -> new OutgoingMessage.SSLRequest
 
     "it should encode the message correctly": (topic) -> 
       reference = new Buffer([0, 0, 0, 8, 4, 210, 22, 47])
       assert.deepEqual topic.toBuffer(), reference
   
   "Password message":
-    topic: -> new Message.Client.Password('password')
+    topic: -> new OutgoingMessage.Password('password')
     
     "it should encode cleartext password messages correctly": (topic) ->
       reference = new Buffer([112, 0, 0, 0, 13, 112, 97, 115, 115, 119, 111, 114, 100, 0])
       assert.deepEqual topic.toBuffer(), reference
 
     "it should encode MD5-hashed password messages correctly": (topic) ->
-      topic.authMethod   = topic.authMethods.MD5_PASSWORD
+      topic.authMethod   = Authentication.methods.MD5_PASSWORD
       topic.options.salt = 'salt'
       topic.options.user = 'user'
       reference = new Buffer([112, 0, 0, 0, 40, 109, 100, 53, 56, 101, 57, 57, 56, 97, 97, 97, 54, 54, 98, 100, 51, 48, 50, 101, 53, 53, 57, 50, 100, 102, 51, 54, 52, 50, 99, 49, 54, 102, 55, 56, 0])

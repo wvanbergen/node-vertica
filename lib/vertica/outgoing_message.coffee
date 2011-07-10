@@ -1,33 +1,11 @@
-Buffer = require('./buffer').Buffer
-
-class Message
-  endian: 'big'
-
-  zeroTerminatedString: (str) ->
-    "#{str}\0"
-
-  zeroTerminatedStringBuffer: (str) ->
-    buffer = new Buffer(Buffer.byteLength(str) + 1)
-    buffer.write(str)
-    buffer[buffer.length - 1] = 0
-    return buffer
-
-###########################################
-# Server messages
-###########################################
-
-class Message.Server extends Message
-  read: (buffer) ->
-    # Implement me in subclass
-
-class Message.Server.ReadyForQuery extends Message.Server
-  typeId: 90
+Authentication  = require('./authentication')
+Buffer          = require('./buffer').Buffer
 
 ###########################################
 # Client messages
 ###########################################
 
-class Message.Client extends Message
+class OutgoingMessage
   typeId: null
   
   payload: ->
@@ -35,20 +13,24 @@ class Message.Client extends Message
   
   toBuffer: ->
     payloadBuffer = @payload()
-    payloadBuffer = @zeroTerminatedStringBuffer(payloadBuffer) if typeof payloadBuffer == 'string'
+
+    if typeof payloadBuffer == 'string'
+      b = new Buffer(payloadBuffer.length + 1)
+      b.writeZeroTerminatedString(payloadBuffer)
+      payloadBuffer = b
       
     headerLength = if @typeId? then 5 else 4
     pos = 0
     messageBuffer = new Buffer(headerLength + payloadBuffer.length)
 
-    pos += messageBuffer.writeUInt8(@typeId, pos, Message.endian) if @typeId
-    pos += messageBuffer.writeUInt32(payloadBuffer.length + 4, pos, Message.endian)
+    pos += messageBuffer.writeUInt8(@typeId, pos) if @typeId
+    pos += messageBuffer.writeUInt32(payloadBuffer.length + 4, pos)
     payloadBuffer.copy(messageBuffer, pos)
     
     return messageBuffer
 
 
-class Message.Client.Startup extends Message.Client
+class OutgoingMessage.Startup extends OutgoingMessage
   typeId: null
   protocol: 3 << 16
   
@@ -75,7 +57,7 @@ class Message.Client.Startup extends Message.Client
     return pl.slice(0, pos)
     
     
-class Message.Client.SSLRequest extends Message.Client
+class OutgoingMessage.SSLRequest extends OutgoingMessage
   typeId: null
   sslMagicNumber: 80877103
   
@@ -84,22 +66,11 @@ class Message.Client.SSLRequest extends Message.Client
     pl.writeUInt32(@sslMagicNumber)
     return pl
     
-class Message.Client.Password extends Message.Client
+class OutgoingMessage.Password extends OutgoingMessage
   typeId: 112
 
-  authMethods :
-    OK: 0
-    KERBEROS_V5: 2
-    CLEARTEXT_PASSWORD: 3
-    CRYPT_PASSWORD: 4
-    MD5_PASSWORD: 5
-    SCM_CREDENTIAL: 6
-    GSS: 7
-    GSS_CONTINUE: 8
-    SSPI: 9
-
   constructor: (@password, @authMethod, @options) -> 
-    @authMethod ?= @authMethods.CLEARTEXT_PASSWORD
+    @authMethod ?= Authentication.methods.CLEARTEXT_PASSWORD
     @options    ?= {}
 
   md5: (str) ->
@@ -108,19 +79,16 @@ class Message.Client.Password extends Message.Client
     hash.digest('hex')
 
   encodedPassword: ->
-    if @authMethod == @authMethods.CLEARTEXT_PASSWORD
-      @password
-    else if @authMethod == @authMethods.MD5_PASSWORD
-      # TODO: check if this is actually implemented and working like this
-      "md5" + @md5(@md5(@password + @options.user) + @options.salt) 
-    else
-      throw new Error("Authentication method #{@authMethod} not implemented.")
+    switch  @authMethod 
+      when Authentication.methods.CLEARTEXT_PASSWORD then @password
+      when Authentication.methods.MD5_PASSWORD then "md5" + @md5(@md5(@password + @options.user) + @options.salt) 
+      else throw new Error("Authentication method #{@authMethod} not implemented.")
 
   payload: ->
     @encodedPassword()
 
 
-class Message.Client.CancelRequest extends Message.Client
+class OutgoingMessage.CancelRequest extends OutgoingMessage
   cancelRequestMagicNumber: 80877102
   
   constructor: (@backendPid, @backendKey) ->
@@ -132,7 +100,7 @@ class Message.Client.CancelRequest extends Message.Client
     b.writeUInt32(@backendKey, 8)
     return b
 
-class Message.Client.Close extends Message.Client
+class OutgoingMessage.Close extends OutgoingMessage
   typeId: 67
 
   constructor: (type, @name) ->
@@ -148,7 +116,7 @@ class Message.Client.Close extends Message.Client
     return b
 
 
-class Message.Client.Describe extends Message.Client
+class OutgoingMessage.Describe extends OutgoingMessage
   typeId: 68
 
   constructor: (type, @name) ->
@@ -164,7 +132,7 @@ class Message.Client.Describe extends Message.Client
     return b
 
 # EXECUTE (E=69)
-class Message.Client.Execute extends Message.Client
+class OutgoingMessage.Execute extends OutgoingMessage
   typeId: 69
 
   constructor: (@portal, @maxRows) ->
@@ -176,7 +144,7 @@ class Message.Client.Execute extends Message.Client
     return b
 
 
-class Message.Client.Query extends Message.Client
+class OutgoingMessage.Query extends OutgoingMessage
   typeId: 81
 
   constructor: (@sql) ->
@@ -184,7 +152,7 @@ class Message.Client.Query extends Message.Client
   payload: ->
     @sql
 
-class Message.Client.Parse extends Message.Client
+class OutgoingMessage.Parse extends OutgoingMessage
   typeId: 80
     
   constructor: (@name, @sql, @parameterTypes) ->
@@ -201,7 +169,7 @@ class Message.Client.Parse extends Message.Client
     return b.slice(0, pos)
 
 
-class Message.Client.Bind extends Message.Client
+class OutgoingMessage.Bind extends OutgoingMessage
   typeId: 66
   
   constructor: (@portal, @preparedStatement, parameterValues) ->
@@ -224,31 +192,14 @@ class Message.Client.Bind extends Message.Client
         
     return b.slice(0, pos)
 
-class Message.Client.Flush extends Message.Client
+class OutgoingMessage.Flush extends OutgoingMessage
   typeId: 72
 
-class Message.Client.Sync extends Message.Client
+class OutgoingMessage.Sync extends OutgoingMessage
   typeId: 83
 
-class Message.Client.Terminate extends Message.Client
+class OutgoingMessage.Terminate extends OutgoingMessage
   typeId: 88
 
-###########################################
-# Reading messages
-###########################################
 
-Message.types = {}
-for _, messageClass of Message.Server
-  if messageClass.typeId != undefined
-    Message.types[messageClass.typeId] = messageClass
-
-  
-Message.fromBuffer = (buffer) ->
-  typeId = buffer.readUInt8  0, Message.endian
-  size   = buffer.readUInt32 1, Message.endian
-  
-  messageClass = Message.types[typeId]
-  messageClass.read(buffer.slice(5, 5 + size))
-
-# exports
-module.exports = Message
+module.exports = OutgoingMessage

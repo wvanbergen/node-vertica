@@ -29,8 +29,7 @@ Buffer::_writeUInt ?= (bytes, number, offset, endian) ->
 #######################################
 # Writing strings
 #######################################
-  
-  
+
 Buffer::writeZeroTerminatedString ?= (str, offset, encoding) ->
   offset ?= 0
   written  = @write(str, offset, encoding)
@@ -67,7 +66,7 @@ Buffer::_readUInt ?= (bytes, offset, endian) ->
 Buffer::readZeroTerminatedString ?= (offset, encoding) ->
   offset ?= 0
   endIndex = offset
-  endIndex++ while endIndex < @length && @[endIndex] != 0
+  endIndex++ while endIndex < @length && @[endIndex] != 0x00
   return @toString('ascii', offset, endIndex)
 
 exports.Buffer = Buffer
