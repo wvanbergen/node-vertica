@@ -48,6 +48,15 @@ vow.addBatch
       assert.equal topic[2], 2
       assert.equal topic[3], 1
 
+  "reading zero-terminated strings":
+    topic: -> new Buffer([80,0,80,80,0])
+
+    "it should read a string at the beginning of the buffer": (topic) ->
+      assert.equal topic.readZeroTerminatedString(), 'P'
+
+    "it should read a string in the middle of the buffer": (topic) ->
+      assert.equal topic.readZeroTerminatedString(2), 'PP'
+
 
   "reading unsigned integers":
     topic: -> new Buffer([1,2,3,4])

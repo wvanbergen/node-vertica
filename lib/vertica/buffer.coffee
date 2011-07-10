@@ -60,5 +60,14 @@ Buffer::_readUInt ?= (bytes, offset, endian) ->
 
   return number
 
+#######################################
+# Reading strings
+#######################################
+
+Buffer::readZeroTerminatedString ?= (offset, encoding) ->
+  offset ?= 0
+  endIndex = offset
+  endIndex++ while endIndex < @length && @[endIndex] != 0
+  return @toString('ascii', offset, endIndex)
 
 exports.Buffer = Buffer
