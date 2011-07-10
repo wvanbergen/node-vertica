@@ -3,30 +3,62 @@
 
 Buffer = require('buffer').Buffer
 
-Buffer::writeUInt8 ?= (number, offset, endian) ->
+#######################################
+# Writing integers
+#######################################
+
+Buffer::writeUInt8 ?= (number, offset) ->
   @[offset || 0] = number & 0xff
   return 1
 
+Buffer::writeUInt16 ?= (number, offset, endian) ->
+  @_writeUInt(2, number, offset, endian)
+
 Buffer::writeUInt32 ?= (number, offset, endian) ->
-  offset ?= 0
-  encodingPositions = if endian == 'little' then [offset .. (offset + 3)] else [(offset + 3) .. offset]
+  @_writeUInt(4, number, offset, endian)
   
+Buffer::_writeUInt ?= (bytes, number, offset, endian) ->
+  offset ?= 0
+  encodingPositions = if endian == 'little' then [offset .. (offset + bytes - 1)] else [(offset + bytes - 1) .. offset]
+
   for currentOffset, index in encodingPositions
     @[currentOffset] = (number >> (8 * index)) & 0xff
-    
-  return 4
   
-Buffer::readUInt8 ?= (offset, endian) ->
+  return bytes
+  
+#######################################
+# Writing strings
+#######################################
+  
+  
+Buffer::writeZeroTerminatedString ?= (str, offset, encoding) ->
+  offset ?= 0
+  written  = @write(str, offset, encoding)
+  written += @writeUInt8(0, offset + written)
+  return written
+  
+#######################################
+# Reading ints
+#######################################
+
+Buffer::readUInt8 ?= (offset) ->
   @[offset || 0]
 
+Buffer::readUInt16 ?= (offset, endian) ->
+  @_readUInt(2, offset, endian)
+
 Buffer::readUInt32 ?= (offset, endian) ->
+  @_readUInt(4, offset, endian)
+
+Buffer::_readUInt ?= (bytes, offset, endian) ->
   offset ?= 0
-  encodingPositions = if endian == 'little' then [offset .. (offset + 3)] else [(offset + 3) .. offset]
+  encodingPositions = if endian == 'little' then [offset .. (offset + bytes - 1)] else [(offset + bytes - 1) .. offset]
   
   number = 0
   for currentOffset, index in encodingPositions
     number = (@[currentOffset] <<  (index * 8)) | number
 
   return number
+
 
 exports.Buffer = Buffer
