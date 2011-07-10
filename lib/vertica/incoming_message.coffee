@@ -37,6 +37,61 @@ class IncomingMessage.ParameterStatus extends IncomingMessage
     @value = buffer.readZeroTerminatedString(@name.length + 1)
     
 
+class IncomingMessage.RowDescription extends IncomingMessage
+  typeId: 84 # T
+  
+  read: (buffer) ->
+    numberOfFields = buffer.readUInt16(0)
+    pos = 2
+
+    @columns = []
+    for i in [0 ... numberOfFields]
+      name = buffer.readZeroTerminatedString(pos)
+      pos += Buffer.byteLength(name) + 1
+      tableId = buffer.readUInt32(pos)
+      pos += 4
+      fieldIndex = buffer.readUInt16(pos)
+      pos += 2
+      type = buffer.readUInt32(pos)
+      pos += 4
+      size = buffer.readUInt16(pos)
+      pos += 2
+      modifier = buffer.readUInt32(pos)
+      pos += 4
+      formatCode = buffer.readUInt16(pos)
+      pos += 2
+      
+      @columns.push name: name, tableId: tableId, fieldIndex: fieldIndex, type: type, size: size, modifier: modifier, formatCode: formatCode
+
+
+class IncomingMessage.DataRow extends IncomingMessage
+  typeId: 68 # D
+  
+  read: (buffer) ->
+    numberOfFields = buffer.readUInt16(0)
+    pos = 2
+
+    @values = []
+    for i in [0 ... numberOfFields]
+      length = buffer.readUInt32(pos)
+      pos += 4
+
+      if length == -1
+        data = null
+      else
+        data = buffer.slice(pos, pos + length)
+        pos += length
+      
+      @values.push(data)
+    
+  
+class IncomingMessage.CommandComplete extends IncomingMessage
+  typeId: 67 # C
+  
+  read: (buffer) ->
+    @status = buffer.readZeroTerminatedString()
+
+
 class IncomingMessage.ReadyForQuery extends IncomingMessage
   typeId: 90 # Z
   

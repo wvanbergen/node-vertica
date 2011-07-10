@@ -27,17 +27,21 @@ class Connection extends EventEmitter
     @connection.on 'error',   @_onError.bind(this)
     @connection.on 'timeout', @_onTimeout.bind(this)
 
+    
+  query: (sql) ->
+    @_writeMessage(new OutgoingMessage.Query(sql))
+
   _onConnect: ->
     # TODO: secure
-    @writeMessage(new OutgoingMessage.Startup(@connectionOptions.user, @connectionOptions.database))
+    @_writeMessage(new OutgoingMessage.Startup(@connectionOptions.user, @connectionOptions.database))
 
     parameterHandler = (msg) => @parameters[msg.name] = msg.value
     keydataHandler   = (msg) => [@pid, @key] = [msg.pid, msg.key]
     readyHandler     = (msg) => 
-      @transactionStatus = msg.transactionStatus
       @removeListener 'ParameterStatus', parameterHandler
       @removeListener 'BackendKeyData', keydataHandler
       @connectedCallback(this)
+      
     handler = (msg) =>
       switch msg.method 
         when Authentication.methods.OK
@@ -46,16 +50,18 @@ class Connection extends EventEmitter
           @once 'ReadyForQuery', readyHandler
           
         when Authentication.methods.CLEARTEXT_PASSWORD, Authentication.methods.MD5_PASSWORD
-          @writeMessage(new OutgoingMessage.Password(@connectionOptions.password, msg.method, salt: msg.salt, user: @connectionOptions.user))
+          @_writeMessage(new OutgoingMessage.Password(@connectionOptions.password, msg.method, salt: msg.salt, user: @connectionOptions.user))
           @once 'Authentication', handler
+          
         else
           throw new Error("Autentication method #{msg.method} not supported.")
     
     @once 'Authentication', handler
 
+    @on 'ReadyForQuery', (msg) =>
+      @transactionStatus = msg.transactionStatus
     
   _onData: (buffer) ->
-    console.log(buffer)
     buffer._pos = 0
     while buffer._pos < buffer.length
       message = IncomingMessage.fromBuffer(buffer)
@@ -74,7 +80,7 @@ class Connection extends EventEmitter
     console.error util.inspect(exception)
     @emit 'error', exception
     
-  writeMessage: (msg, callback) ->
+  _writeMessage: (msg, callback) ->
     @connection.write(msg.toBuffer(), null, callback)
 
 # Exports
