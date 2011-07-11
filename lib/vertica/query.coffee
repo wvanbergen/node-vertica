@@ -40,10 +40,14 @@ class Query extends EventEmitter
     
     @emit 'error', msg
 
-
 converters =
-  1043: (value) -> value.toString()
-  23:   (value) -> parseInt(value.toString())
+  string:  (value) -> value.toString()
+  integer: (value) -> parseInt(value)
+
+fieldConverters =
+  0: # text encoded
+    1043: converters.string
+    23: converters.integer 
 
 
 
@@ -57,6 +61,6 @@ class Query.Field
     @modifier   = msg.modifier
     @formatCode = msg.formatCode
     
-    @convert = converters[@type] || ((value) -> value.toString())
+    @convert = fieldConverters[@formatCode][@type] || ((value) -> value.toString())
 
 module.exports = Query
