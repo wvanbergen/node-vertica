@@ -29,10 +29,15 @@ class Query extends EventEmitter
     @emit 'row', row
     
   onCommandComplete: (msg) ->
-    @connection.removeListener "DataRow", @onDataRow.bind(this)
+    @connection.removeAllListeners "DataRow"
+    @connection.removeAllListeners "ErrorResponse"
     @emit 'end', msg.status
     
   onErrorResponse: (msg) ->
+    @connection.removeAllListeners "RowDescription"
+    @connection.removeAllListeners "DataRow"
+    @connection.removeAllListeners "CommandComplete"
+    
     @emit 'error', msg
 
 
