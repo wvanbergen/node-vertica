@@ -92,11 +92,43 @@ class IncomingMessage.CommandComplete extends IncomingMessage
     @status = buffer.readZeroTerminatedString()
 
 
+class IncomingMessage.ErrorResponse extends IncomingMessage
+  typeId: 69 # E
+  
+  fieldNames:
+    83:  'Severity'
+    67:  'Code'
+    77:  'Message'
+    68:  'Detail'
+    72:  'Hint'
+    80:  'Position'
+    112: 'Internal position'
+    113: 'Internal query'
+    87:  'Where'
+    70:  'File'
+    76:  'Line'
+    82:  'Routine'
+    
+  read: (buffer) ->
+    @information = {}
+    
+    fieldCode = buffer.readUInt8(0)
+    pos = 1
+    while fieldCode != 0x00
+      value = buffer.readZeroTerminatedString(pos)
+      @information[@fieldNames[fieldCode] || fieldCode] = value
+      pos += Buffer.byteLength(value) + 1
+      
+      fieldCode = buffer.readUInt8(pos)
+      pos += 1
+
+
 class IncomingMessage.ReadyForQuery extends IncomingMessage
   typeId: 90 # Z
   
   read: (buffer) ->
     @transactionStatus = buffer.readUInt8(0)
+
   
 ##############################################################
 # IncomingMessage factory
