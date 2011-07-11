@@ -5,7 +5,8 @@ EventEmitter    = require('events').EventEmitter
 OutgoingMessage = require('./outgoing_message')
 IncomingMessage = require('./incoming_message')
 Authentication  = require('./authentication')
-
+Query           = require('./query')
+ 
 class Connection extends EventEmitter
   
   constructor: (@connectionOptions) ->
@@ -29,7 +30,7 @@ class Connection extends EventEmitter
 
     
   query: (sql) ->
-    @_writeMessage(new OutgoingMessage.Query(sql))
+    new Query(this, sql)
 
   _onConnect: ->
     # TODO: secure
