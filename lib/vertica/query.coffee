@@ -40,16 +40,24 @@ class Query extends EventEmitter
     
     @emit 'error', msg
 
-converters =
+stringConverters =
   string:  (value) -> value.toString()
   integer: (value) -> parseInt(value)
+  float:   (value) -> parseValue(value)
+  bool:    (value) -> value.toString() == 't'
 
 fieldConverters =
   0: # text encoded
-    1043: converters.string
-    23: converters.integer 
-
-
+    25:   stringConverters.string
+    1043: stringConverters.string
+    20:   stringConverters.integer
+    21:   stringConverters.integer
+    23:   stringConverters.integer
+    26:   stringConverters.integer
+    700:  stringConverters.integer
+    701:  stringConverters.integer
+    1700: stringConverters.float
+    16:   stringConverters.bool
 
 class Query.Field
   constructor: (msg) ->
