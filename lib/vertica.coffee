@@ -1,6 +1,7 @@
-VerticaConnection = require('./vertica/connection')
+exports.Connection = require('./connection')
 
 exports.connect = (connectionOptions, callback) ->
-  connection = new VerticaConnection(connectionOptions)
+  connection = new exports.Connection(connectionOptions)
   connection.connect(callback)
   return connection
+
