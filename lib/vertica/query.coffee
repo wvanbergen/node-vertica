@@ -24,7 +24,7 @@ class Query extends EventEmitter
   onDataRow: (msg) ->
     row = []
     for value, index in msg.values
-      row.push @fields[index].convert(value)
+      row.push if value? then @fields[index].convert(value) else null
     
     @emit 'row', row
     
@@ -41,10 +41,27 @@ class Query extends EventEmitter
     @emit 'error', msg
 
 stringConverters =
-  string:  (value) -> value.toString()
-  integer: (value) -> parseInt(value)
-  float:   (value) -> parseValue(value)
-  bool:    (value) -> value.toString() == 't'
+  string:   (value) -> value.toString()
+  integer:  (value) -> parseInt(value)
+  float:    (value) -> parseValue(value)
+  bool:     (value) -> value.toString() == 't'
+  
+  datetime: (value) ->
+    year   = parseInt(value.slice(0, 4))
+    month  = parseInt(value.slice(5, 7))
+    day    = parseInt(value.slice(8, 10))
+    hour   = parseInt(value.slice(11, 13))
+    minute = parseInt(value.slice(14, 16))
+    second = parseInt(value.slice(17, 19))
+    new Date(Date.UTC(year, month, day, hour, minute, second))
+    
+  date: (value) ->
+    year   = parseInt(value.slice(0, 4))
+    month  = parseInt(value.slice(5, 7))
+    day    = parseInt(value.slice(8, 10))
+    new Date(Date.UTC(year, month, day))
+
+
 
 fieldConverters =
   0: # text encoded
@@ -58,6 +75,8 @@ fieldConverters =
     701:  stringConverters.integer
     1700: stringConverters.float
     16:   stringConverters.bool
+    6:    stringConverters.integer
+    12:   stringConverters.datetime
 
 class Query.Field
   constructor: (msg) ->

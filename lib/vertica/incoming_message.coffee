@@ -142,15 +142,10 @@ for name, messageClass of IncomingMessage
 
 
 IncomingMessage.fromBuffer = (buffer) ->
-  buffer._pos ?= 0
-  
-  typeId = buffer.readUInt8(buffer._pos + 0)
-  size   = buffer.readUInt32(buffer._pos + 1)
-
+  typeId = buffer.readUInt8()
   messageClass = IncomingMessage.types[typeId]
   if messageClass?
-    message = new messageClass(buffer.slice(buffer._pos + 5, buffer._pos + size + 1))
-    buffer._pos += 1 + size
+    message = new messageClass(buffer.slice(5))
     message
   else
     throw new Error("Unkown message type: #{typeId}")

@@ -1,5 +1,5 @@
-util = require('util')
-net  = require('net')
+util = require 'util'
+net  = require 'net'
 
 EventEmitter    = require('events').EventEmitter
 OutgoingMessage = require('./outgoing_message')
@@ -17,6 +17,8 @@ class Connection extends EventEmitter
     @key = null
     @pid = null
     @transactionStatus = null
+    
+    @incomingData = new Buffer(0)
   
   connect: (callback) ->
     @connectedCallback = callback
@@ -28,9 +30,11 @@ class Connection extends EventEmitter
     @connection.on 'error',   @_onError.bind(this)
     @connection.on 'timeout', @_onTimeout.bind(this)
 
-    
-  query: (sql) ->
-    new Query(this, sql)
+
+  query: (sql, callback) ->
+    q = new Query(this, sql)
+    q.on 'error', (err) => console.error err
+    return q
 
   _onConnect: ->
     # TODO: secure
@@ -51,6 +55,7 @@ class Connection extends EventEmitter
           @once 'ReadyForQuery', readyHandler
           
         when Authentication.methods.CLEARTEXT_PASSWORD, Authentication.methods.MD5_PASSWORD
+          console.log msg
           @_writeMessage(new OutgoingMessage.Password(@connectionOptions.password, msg.method, salt: msg.salt, user: @connectionOptions.user))
           @once 'Authentication', handler
           
@@ -63,12 +68,27 @@ class Connection extends EventEmitter
       @transactionStatus = msg.transactionStatus
     
   _onData: (buffer) ->
-    buffer._pos = 0
-    while buffer._pos < buffer.length
-      message = IncomingMessage.fromBuffer(buffer)
+    if @incomingData.length == 0
+      @incomingData = buffer
+    else
+      bufferedData = new Buffer(@incomingData.length + buffer.length)
+      @incomingData.copy(bufferedData)
+      buffer.copy(bufferedData, @incomingData.length)
+      @incomingData = bufferedData
+    
+    size = @incomingData.readUInt32(1) # skip the message ID
+    while size + 1 <= @incomingData.length
+
+      # parse message
+      message = IncomingMessage.fromBuffer(@incomingData.slice(0, size + 1))
       @emit 'message', message
       @emit message.event, message
-    
+      
+      # update loop variables
+      @incomingData = @incomingData.slice(size + 1)
+      size = @incomingData.readUInt32(1)
+
+
   _onClose: ->
     @connected = false
     @emit 'close'

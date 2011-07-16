@@ -13,12 +13,11 @@ class OutgoingMessage
   
   toBuffer: ->
     payloadBuffer = @payload()
-
     if typeof payloadBuffer == 'string'
       b = new Buffer(payloadBuffer.length + 1)
       b.writeZeroTerminatedString(payloadBuffer)
       payloadBuffer = b
-      
+
     headerLength = if @typeId? then 5 else 4
     pos = 0
     messageBuffer = new Buffer(headerLength + payloadBuffer.length)
@@ -70,6 +69,7 @@ class OutgoingMessage.Password extends OutgoingMessage
   typeId: 112
 
   constructor: (@password, @authMethod, @options) -> 
+    @password   ?= ''
     @authMethod ?= Authentication.methods.CLEARTEXT_PASSWORD
     @options    ?= {}
 
@@ -79,7 +79,7 @@ class OutgoingMessage.Password extends OutgoingMessage
     hash.digest('hex')
 
   encodedPassword: ->
-    switch  @authMethod 
+    switch @authMethod 
       when Authentication.methods.CLEARTEXT_PASSWORD then @password
       when Authentication.methods.MD5_PASSWORD then "md5" + @md5(@md5(@password + @options.user) + @options.salt) 
       else throw new Error("Authentication method #{@authMethod} not implemented.")
