@@ -2,8 +2,8 @@ vows    = require 'vows'
 assert  = require 'assert'
 
 
-IncomingMessage = require('../lib/vertica/incoming_message')
-Buffer = require('../lib/vertica/buffer').Buffer
+IncomingMessage = require('../lib/incoming_message')
+Buffer = require('../lib/buffer').Buffer
 
 vow = vows.describe('IncomingMessage')
 

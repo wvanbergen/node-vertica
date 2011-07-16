@@ -1,7 +1,7 @@
 vows   = require 'vows'
 assert = require 'assert'
 
-Buffer = require('../lib/vertica/buffer').Buffer
+Buffer = require('../lib/buffer').Buffer
 
 vow = vows.describe('Buffer')
 

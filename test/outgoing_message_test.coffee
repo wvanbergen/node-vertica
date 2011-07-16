@@ -1,9 +1,9 @@
 vows    = require 'vows'
 assert  = require 'assert'
 
-Buffer          = require('../lib/vertica/buffer').Buffer
-OutgoingMessage = require('../lib/vertica/outgoing_message')
-Authentication  = require('../lib/vertica/authentication')
+Buffer          = require('../lib/buffer').Buffer
+OutgoingMessage = require('../lib/outgoing_message')
+Authentication  = require('../lib/authentication')
 
 vow = vows.describe('OutgoingMessage')
 
