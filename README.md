@@ -1,4 +1,4 @@
-### node-vertica
+# node-vertica
 
 A pure javascript library to connect to a Vertica database.
 
