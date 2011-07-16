@@ -1,7 +1,7 @@
 vows   = require 'vows'
 assert = require 'assert'
 
-Buffer = require('../lib/buffer').Buffer
+Buffer = require('../src/buffer').Buffer
 
 vow = vows.describe('Buffer')
 

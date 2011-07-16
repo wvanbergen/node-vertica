@@ -2,8 +2,8 @@ vows    = require 'vows'
 assert  = require 'assert'
 
 
-IncomingMessage = require('../lib/incoming_message')
-Buffer = require('../lib/buffer').Buffer
+IncomingMessage = require('../src/incoming_message')
+Buffer = require('../src/buffer').Buffer
 
 vow = vows.describe('IncomingMessage')
 

@@ -1,9 +1,9 @@
 vows    = require 'vows'
 assert  = require 'assert'
 
-Buffer          = require('../lib/buffer').Buffer
-OutgoingMessage = require('../lib/outgoing_message')
-Authentication  = require('../lib/authentication')
+Buffer          = require('../src/buffer').Buffer
+OutgoingMessage = require('../src/outgoing_message')
+Authentication  = require('../src/authentication')
 
 vow = vows.describe('OutgoingMessage')
 
