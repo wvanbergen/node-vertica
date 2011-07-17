@@ -2,8 +2,8 @@ util = require 'util'
 net  = require 'net'
 
 EventEmitter    = require('events').EventEmitter
-OutgoingMessage = require('./outgoing_message')
-IncomingMessage = require('./incoming_message')
+FrontendMessage = require('./frontend_message')
+BackendMessage  = require('./backend_message')
 Authentication  = require('./authentication')
 Query           = require('./query')
  
@@ -38,7 +38,7 @@ class Connection extends EventEmitter
 
   _onConnect: ->
     # TODO: secure
-    @_writeMessage(new OutgoingMessage.Startup(@connectionOptions.user, @connectionOptions.database))
+    @_writeMessage(new FrontendMessage.Startup(@connectionOptions.user, @connectionOptions.database))
 
     parameterHandler = (msg) => @parameters[msg.name] = msg.value
     keydataHandler   = (msg) => [@pid, @key] = [msg.pid, msg.key]
@@ -56,7 +56,7 @@ class Connection extends EventEmitter
           
         when Authentication.methods.CLEARTEXT_PASSWORD, Authentication.methods.MD5_PASSWORD
           console.log msg
-          @_writeMessage(new OutgoingMessage.Password(@connectionOptions.password, msg.method, salt: msg.salt, user: @connectionOptions.user))
+          @_writeMessage(new FrontendMessage.Password(@connectionOptions.password, msg.method, salt: msg.salt, user: @connectionOptions.user))
           @once 'Authentication', handler
           
         else
@@ -80,7 +80,7 @@ class Connection extends EventEmitter
     while size + 1 <= @incomingData.length
 
       # parse message
-      message = IncomingMessage.fromBuffer(@incomingData.slice(0, size + 1))
+      message = BackendMessage.fromBuffer(@incomingData.slice(0, size + 1))
       @emit 'message', message
       @emit message.event, message
       

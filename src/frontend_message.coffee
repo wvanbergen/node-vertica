@@ -5,7 +5,7 @@ Buffer          = require('./buffer').Buffer
 # Client messages
 ###########################################
 
-class OutgoingMessage
+class FrontendMessage
   typeId: null
   
   payload: ->
@@ -29,7 +29,7 @@ class OutgoingMessage
     return messageBuffer
 
 
-class OutgoingMessage.Startup extends OutgoingMessage
+class FrontendMessage.Startup extends FrontendMessage
   typeId: null
   protocol: 3 << 16
   
@@ -56,7 +56,7 @@ class OutgoingMessage.Startup extends OutgoingMessage
     return pl.slice(0, pos)
     
     
-class OutgoingMessage.SSLRequest extends OutgoingMessage
+class FrontendMessage.SSLRequest extends FrontendMessage
   typeId: null
   sslMagicNumber: 80877103
   
@@ -65,7 +65,7 @@ class OutgoingMessage.SSLRequest extends OutgoingMessage
     pl.writeUInt32(@sslMagicNumber)
     return pl
     
-class OutgoingMessage.Password extends OutgoingMessage
+class FrontendMessage.Password extends FrontendMessage
   typeId: 112
 
   constructor: (@password, @authMethod, @options) -> 
@@ -88,7 +88,7 @@ class OutgoingMessage.Password extends OutgoingMessage
     @encodedPassword()
 
 
-class OutgoingMessage.CancelRequest extends OutgoingMessage
+class FrontendMessage.CancelRequest extends FrontendMessage
   cancelRequestMagicNumber: 80877102
   
   constructor: (@backendPid, @backendKey) ->
@@ -100,7 +100,7 @@ class OutgoingMessage.CancelRequest extends OutgoingMessage
     b.writeUInt32(@backendKey, 8)
     return b
 
-class OutgoingMessage.Close extends OutgoingMessage
+class FrontendMessage.Close extends FrontendMessage
   typeId: 67
 
   constructor: (type, @name) ->
@@ -116,7 +116,7 @@ class OutgoingMessage.Close extends OutgoingMessage
     return b
 
 
-class OutgoingMessage.Describe extends OutgoingMessage
+class FrontendMessage.Describe extends FrontendMessage
   typeId: 68
 
   constructor: (type, @name) ->
@@ -132,7 +132,7 @@ class OutgoingMessage.Describe extends OutgoingMessage
     return b
 
 # EXECUTE (E=69)
-class OutgoingMessage.Execute extends OutgoingMessage
+class FrontendMessage.Execute extends FrontendMessage
   typeId: 69
 
   constructor: (@portal, @maxRows) ->
@@ -144,7 +144,7 @@ class OutgoingMessage.Execute extends OutgoingMessage
     return b
 
 
-class OutgoingMessage.Query extends OutgoingMessage
+class FrontendMessage.Query extends FrontendMessage
   typeId: 81
 
   constructor: (@sql) ->
@@ -152,7 +152,7 @@ class OutgoingMessage.Query extends OutgoingMessage
   payload: ->
     @sql
 
-class OutgoingMessage.Parse extends OutgoingMessage
+class FrontendMessage.Parse extends FrontendMessage
   typeId: 80
     
   constructor: (@name, @sql, @parameterTypes) ->
@@ -169,7 +169,7 @@ class OutgoingMessage.Parse extends OutgoingMessage
     return b.slice(0, pos)
 
 
-class OutgoingMessage.Bind extends OutgoingMessage
+class FrontendMessage.Bind extends FrontendMessage
   typeId: 66
   
   constructor: (@portal, @preparedStatement, parameterValues) ->
@@ -192,14 +192,14 @@ class OutgoingMessage.Bind extends OutgoingMessage
         
     return b.slice(0, pos)
 
-class OutgoingMessage.Flush extends OutgoingMessage
+class FrontendMessage.Flush extends FrontendMessage
   typeId: 72
 
-class OutgoingMessage.Sync extends OutgoingMessage
+class FrontendMessage.Sync extends FrontendMessage
   typeId: 83
 
-class OutgoingMessage.Terminate extends OutgoingMessage
+class FrontendMessage.Terminate extends FrontendMessage
   typeId: 88
 
 
-module.exports = OutgoingMessage
+module.exports = FrontendMessage

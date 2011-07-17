@@ -2,14 +2,14 @@ vows    = require 'vows'
 assert  = require 'assert'
 
 Buffer          = require('../src/buffer').Buffer
-OutgoingMessage = require('../src/outgoing_message')
+FrontendMessage = require('../src/frontend_message')
 Authentication  = require('../src/authentication')
 
-vow = vows.describe('OutgoingMessage')
+vow = vows.describe('FrontendMessage')
 
 vow.addBatch
   "Startup message":
-    topic: -> new OutgoingMessage.Startup('username', 'database')
+    topic: -> new FrontendMessage.Startup('username', 'database')
 
     "it should hold the message's information": (topic) ->
       assert.equal topic.user,     'username'
@@ -23,7 +23,7 @@ vow.addBatch
       
 
   "CancelRequest message":
-    topic: -> new OutgoingMessage.CancelRequest(123, 456)
+    topic: -> new FrontendMessage.CancelRequest(123, 456)
 
     "it should hold the correct information": (topic) ->
       assert.equal topic.backendPid, 123
@@ -36,7 +36,7 @@ vow.addBatch
       
   "Describe message":
     'Portal description':
-      topic: -> new OutgoingMessage.Describe('portal', 'name')
+      topic: -> new FrontendMessage.Describe('portal', 'name')
     
       "it should hold the correct information": (topic) ->
         assert.equal topic.type, 80
@@ -47,7 +47,7 @@ vow.addBatch
         assert.deepEqual topic.toBuffer(), reference
     
     'Prepared statement description':
-      topic: -> new OutgoingMessage.Describe('statement', 'name')
+      topic: -> new FrontendMessage.Describe('statement', 'name')
 
       "it should hold the correct information": (topic) ->
         assert.equal topic.type, 83
@@ -59,7 +59,7 @@ vow.addBatch
 
   "Close message":
     'closing a portal':
-      topic: -> new OutgoingMessage.Close('portal', 'name')
+      topic: -> new FrontendMessage.Close('portal', 'name')
 
       "it should hold the correct information": (topic) ->
         assert.equal topic.type, 80
@@ -70,7 +70,7 @@ vow.addBatch
         assert.deepEqual topic.toBuffer(), reference
 
     'closing a prepared statement':
-      topic: -> new OutgoingMessage.Close('statement', 'name')
+      topic: -> new FrontendMessage.Close('statement', 'name')
 
       "it should hold the correct information": (topic) ->
         assert.equal topic.type, 83
@@ -82,7 +82,7 @@ vow.addBatch
 
 
   "Query message":
-    topic: -> new OutgoingMessage.Query("SELECT * FROM table")
+    topic: -> new FrontendMessage.Query("SELECT * FROM table")
   
     "it should hold the SQL query": (topic) ->
       assert.equal topic.sql, "SELECT * FROM table"
@@ -92,7 +92,7 @@ vow.addBatch
       assert.deepEqual topic.toBuffer(), reference
 
   "Parse message":
-    topic: -> new OutgoingMessage.Parse("test", "SELECT * FROM table", [1, 2, 3])
+    topic: -> new FrontendMessage.Parse("test", "SELECT * FROM table", [1, 2, 3])
       
     "it should hold the name, query and parameter types": (topic) ->
       assert.equal topic.name, "test"
@@ -105,7 +105,7 @@ vow.addBatch
       assert.deepEqual topic.toBuffer(), reference
   
   "Bind message":
-    topic: -> new OutgoingMessage.Bind("portal", "prep", ["hello", "world", 123])
+    topic: -> new FrontendMessage.Bind("portal", "prep", ["hello", "world", 123])
     
     "it should hold the portal, prepared statement name and parameter values": (topic) ->
       assert.equal topic.portal, "portal"
@@ -126,7 +126,7 @@ vow.addBatch
       ])
 
   "Flush message":
-    topic: -> new OutgoingMessage.Flush
+    topic: -> new FrontendMessage.Flush
 
     "it should encode the message correctly": (topic) -> 
       reference = new Buffer([72, 0, 0, 0, 4])
@@ -134,7 +134,7 @@ vow.addBatch
 
 
   "Execute message":
-    topic: -> new OutgoingMessage.Execute('portal', 100)
+    topic: -> new FrontendMessage.Execute('portal', 100)
     
     "it should hold portal name and maximum number of rows": (topic) ->
       assert.equal topic.portal, 'portal'
@@ -146,7 +146,7 @@ vow.addBatch
 
 
   "Sync message":
-    topic: -> new OutgoingMessage.Sync
+    topic: -> new FrontendMessage.Sync
 
     "it should encode the message correctly": (topic) -> 
       reference = new Buffer([83, 0, 0, 0, 4])
@@ -154,7 +154,7 @@ vow.addBatch
 
 
   "Terminate message":
-    topic: -> new OutgoingMessage.Terminate
+    topic: -> new FrontendMessage.Terminate
 
     "it should encode the message correctly": (topic) -> 
       reference = new Buffer([88, 0, 0, 0, 4])
@@ -162,14 +162,14 @@ vow.addBatch
 
 
   "SSLRequest message":
-    topic: -> new OutgoingMessage.SSLRequest
+    topic: -> new FrontendMessage.SSLRequest
 
     "it should encode the message correctly": (topic) -> 
       reference = new Buffer([0, 0, 0, 8, 4, 210, 22, 47])
       assert.deepEqual topic.toBuffer(), reference
   
   "Password message":
-    topic: -> new OutgoingMessage.Password('password')
+    topic: -> new FrontendMessage.Password('password')
     
     "it should encode cleartext password messages correctly": (topic) ->
       reference = new Buffer([112, 0, 0, 0, 13, 112, 97, 115, 115, 119, 111, 114, 100, 0])

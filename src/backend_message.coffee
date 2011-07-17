@@ -1,6 +1,6 @@
 AuthenticationMethods  = require('./authentication').methods
 
-class IncomingMessage
+class BackendMessage
   typeId: null
   
   constructor: (buffer) ->
@@ -10,7 +10,7 @@ class IncomingMessage
     # Implement me in subclass
 
 
-class IncomingMessage.Authentication extends IncomingMessage
+class BackendMessage.Authentication extends BackendMessage
   typeId: 82 # R
   
   read: (buffer) ->
@@ -21,7 +21,7 @@ class IncomingMessage.Authentication extends IncomingMessage
       @salt = stream.readUInt16(4)
 
 
-class IncomingMessage.BackendKeyData extends IncomingMessage
+class BackendMessage.BackendKeyData extends BackendMessage
   typeId: 75 # K
 
   read: (buffer) ->
@@ -29,7 +29,7 @@ class IncomingMessage.BackendKeyData extends IncomingMessage
     @key = buffer.readUInt32(4)
 
 
-class IncomingMessage.ParameterStatus extends IncomingMessage
+class BackendMessage.ParameterStatus extends BackendMessage
   typeId: 83 # S
 
   read: (buffer) ->
@@ -37,7 +37,7 @@ class IncomingMessage.ParameterStatus extends IncomingMessage
     @value = buffer.readZeroTerminatedString(@name.length + 1)
     
 
-class IncomingMessage.RowDescription extends IncomingMessage
+class BackendMessage.RowDescription extends BackendMessage
   typeId: 84 # T
   
   read: (buffer) ->
@@ -64,7 +64,7 @@ class IncomingMessage.RowDescription extends IncomingMessage
       @columns.push name: name, tableId: tableId, fieldIndex: fieldIndex, type: type, size: size, modifier: modifier, formatCode: formatCode
 
 
-class IncomingMessage.DataRow extends IncomingMessage
+class BackendMessage.DataRow extends BackendMessage
   typeId: 68 # D
   
   read: (buffer) ->
@@ -85,14 +85,14 @@ class IncomingMessage.DataRow extends IncomingMessage
       @values.push(data)
     
   
-class IncomingMessage.CommandComplete extends IncomingMessage
+class BackendMessage.CommandComplete extends BackendMessage
   typeId: 67 # C
   
   read: (buffer) ->
     @status = buffer.readZeroTerminatedString()
 
 
-class IncomingMessage.ErrorResponse extends IncomingMessage
+class BackendMessage.ErrorResponse extends BackendMessage
   typeId: 69 # E
   
   fieldNames:
@@ -123,7 +123,7 @@ class IncomingMessage.ErrorResponse extends IncomingMessage
       pos += 1
 
 
-class IncomingMessage.ReadyForQuery extends IncomingMessage
+class BackendMessage.ReadyForQuery extends BackendMessage
   typeId: 90 # Z
   
   read: (buffer) ->
@@ -131,23 +131,23 @@ class IncomingMessage.ReadyForQuery extends IncomingMessage
 
   
 ##############################################################
-# IncomingMessage factory
+# BackendMessage factory
 ############################################################## 
 
-IncomingMessage.types = {}
-for name, messageClass of IncomingMessage
+BackendMessage.types = {}
+for name, messageClass of BackendMessage
   if messageClass.prototype && messageClass.prototype.typeId?
     messageClass.prototype.event = name
-    IncomingMessage.types[messageClass.prototype.typeId] = messageClass
+    BackendMessage.types[messageClass.prototype.typeId] = messageClass
 
 
-IncomingMessage.fromBuffer = (buffer) ->
+BackendMessage.fromBuffer = (buffer) ->
   typeId = buffer.readUInt8()
-  messageClass = IncomingMessage.types[typeId]
+  messageClass = BackendMessage.types[typeId]
   if messageClass?
     message = new messageClass(buffer.slice(5))
     message
   else
     throw new Error("Unkown message type: #{typeId}")
   
-module.exports = IncomingMessage
+module.exports = BackendMessage
