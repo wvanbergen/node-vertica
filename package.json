@@ -27,7 +27,9 @@
   },
   "main": "./lib/vertica",
   "directories": {
-    "lib": "./lib"
+    "lib": "./lib",
+    "src": "./src",
+    "test": "./test"
   },
   "engine": "node >= 0.40",
   "scripts": {
