@@ -24,12 +24,23 @@ class Connection extends EventEmitter
     @connectedCallback = callback
     @connection = net.createConnection @connectionOptions.port, @connectionOptions.host
 
-    @connection.on 'connect', @_onConnect.bind(this)
-    @connection.on 'data',    @_onData.bind(this)
-    @connection.on 'close',   @_onClose.bind(this)
-    @connection.on 'error',   @_onError.bind(this)
-    @connection.on 'timeout', @_onTimeout.bind(this)
-
+    @connection.on 'connect', =>
+    
+      @connection.on 'close',   @_onClose.bind(this)
+      @connection.on 'error',   @_onError.bind(this)
+      @connection.on 'timeout', @_onTimeout.bind(this)
+    
+      if @connectionOptions.secure
+        @_writeMessage(new FrontendMessage.SSLRequest)
+        @connection.once 'data', (buffer) =>
+          if 'S' == buffer.toString('utf-8')
+            @emit 'error', new Error("SSL connections are not yet implemented")
+          else if @connectionOptions.secure == true || @connectionOptions.secure == 'required'
+            @emit 'error', new Error("The server does not support SSL connection")
+          else 
+            @_handshake()
+      else
+        @_handshake()
 
   disconnect: ->
     @connection.end()
@@ -42,6 +53,7 @@ class Connection extends EventEmitter
 
 
   _handshake: ->
+    @connection.on 'data', @_onData.bind(this)
     @_writeMessage(new FrontendMessage.Startup(@connectionOptions.user, @connectionOptions.database))
 
     authenticationHandler = (msg) =>
@@ -55,21 +67,13 @@ class Connection extends EventEmitter
           
         else
           throw new Error("Autentication method #{msg.method} not supported.")
-    
-    @once 'Authentication', authenticationHandler
 
+    @once 'Authentication', authenticationHandler
     @on 'ReadyForQuery',   (msg) => @transactionStatus = msg.transactionStatus
     @on 'ParameterStatus', (msg) => @parameters[msg.name] = msg.value
     @on 'BackendKeyData',  (msg) => [@pid, @key] = [msg.pid, msg.key]
 
 
-
-  _onConnect: ->
-    if @connectionOptions.secure
-      # TODO: secure
-    else
-      @_handshake()
-    
   _onData: (buffer) ->
     # Append the new data with the previous buffer's residue if there was any.
     if @incomingData.length == 0
@@ -85,6 +89,7 @@ class Connection extends EventEmitter
 
       # parse message
       message = BackendMessage.fromBuffer(@incomingData.slice(0, size + 1))
+      console.log message
       @emit 'message', message
       @emit message.event, message
       
