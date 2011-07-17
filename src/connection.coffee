@@ -25,16 +25,29 @@ class Connection extends EventEmitter
     @connection = net.createConnection @connectionOptions.port, @connectionOptions.host
 
     @connection.on 'connect', =>
-    
+
       @connection.on 'close',   @_onClose.bind(this)
       @connection.on 'error',   @_onError.bind(this)
       @connection.on 'timeout', @_onTimeout.bind(this)
-    
+
       if @connectionOptions.secure
+        
+        sslOptions = key: @connectionOptions.key, cert: @connectionOptions.cert, ca: @connectionOptions.ca
+        throw new Error("Please provide a private key to connect through SSL.") unless sslOptions.key?
+        
         @_writeMessage(new FrontendMessage.SSLRequest)
         @connection.once 'data', (buffer) =>
           if 'S' == buffer.toString('utf-8')
-            @emit 'error', new Error("SSL connections are not yet implemented")
+            tls      = require 'tls'
+            starttls = require './starttls'
+            
+            conn = starttls @connection, sslOptions, =>
+              if !conn.authorized && @connectionOptions.rejectUnauthorized
+                @emit 'error', new Error(conn.authorizationError)
+              else
+              @connection = conn
+              @_handshake()
+              
           else if @connectionOptions.secure == true || @connectionOptions.secure == 'required'
             @emit 'error', new Error("The server does not support SSL connection")
           else 
@@ -47,8 +60,10 @@ class Connection extends EventEmitter
 
 
   query: (sql, callback) ->
+    @busy = true
     q = new Query(this, sql)
-    q.on 'error', (err) => console.error err
+    q.on "end",   => @busy = false
+    q.on "error", => @busy = false
     return q
 
 
@@ -89,7 +104,6 @@ class Connection extends EventEmitter
 
       # parse message
       message = BackendMessage.fromBuffer(@incomingData.slice(0, size + 1))
-      console.log message
       @emit 'message', message
       @emit message.event, message
       
