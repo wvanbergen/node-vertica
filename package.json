@@ -31,7 +31,7 @@
   },
   "engine": "node >= 0.40",
   "scripts": {
-    "prepublish": "cake build",
+    "prepublish": "cake clean && cake build",
     "test": "cake test"
   }
 }
