@@ -31,43 +31,47 @@ class Connection extends EventEmitter
     @connection.on 'timeout', @_onTimeout.bind(this)
 
 
+  disconnect: ->
+    @connection.end()
+
+
   query: (sql, callback) ->
     q = new Query(this, sql)
     q.on 'error', (err) => console.error err
     return q
 
-  _onConnect: ->
-    # TODO: secure
+
+  _handshake: ->
     @_writeMessage(new FrontendMessage.Startup(@connectionOptions.user, @connectionOptions.database))
 
-    parameterHandler = (msg) => @parameters[msg.name] = msg.value
-    keydataHandler   = (msg) => [@pid, @key] = [msg.pid, msg.key]
-    readyHandler     = (msg) => 
-      @removeListener 'ParameterStatus', parameterHandler
-      @removeListener 'BackendKeyData', keydataHandler
-      @connectedCallback(this)
-      
-    handler = (msg) =>
+    authenticationHandler = (msg) =>
       switch msg.method 
         when Authentication.methods.OK
-          @on 'ParameterStatus', parameterHandler
-          @on 'BackendKeyData',  keydataHandler
-          @once 'ReadyForQuery', readyHandler
+          @once 'ReadyForQuery', (msg) => @connectedCallback(this)
           
         when Authentication.methods.CLEARTEXT_PASSWORD, Authentication.methods.MD5_PASSWORD
-          console.log msg
           @_writeMessage(new FrontendMessage.Password(@connectionOptions.password, msg.method, salt: msg.salt, user: @connectionOptions.user))
-          @once 'Authentication', handler
+          @once 'Authentication', authenticationHandler
           
         else
           throw new Error("Autentication method #{msg.method} not supported.")
     
-    @once 'Authentication', handler
+    @once 'Authentication', authenticationHandler
 
-    @on 'ReadyForQuery', (msg) =>
-      @transactionStatus = msg.transactionStatus
+    @on 'ReadyForQuery',   (msg) => @transactionStatus = msg.transactionStatus
+    @on 'ParameterStatus', (msg) => @parameters[msg.name] = msg.value
+    @on 'BackendKeyData',  (msg) => [@pid, @key] = [msg.pid, msg.key]
+
+
+
+  _onConnect: ->
+    if @connectionOptions.secure
+      # TODO: secure
+    else
+      @_handshake()
     
   _onData: (buffer) ->
+    # Append the new data with the previous buffer's residue if there was any.
     if @incomingData.length == 0
       @incomingData = buffer
     else
