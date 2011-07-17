@@ -1,5 +1,6 @@
 util = require 'util'
 net  = require 'net'
+fs   = require 'fs'
 
 EventEmitter    = require('events').EventEmitter
 FrontendMessage = require('./frontend_message')
@@ -28,15 +29,14 @@ class Connection extends EventEmitter
       @_bindEventListeners()
       
       if @connectionOptions.secure
-        
-        sslOptions = key: @connectionOptions.key, cert: @connectionOptions.cert, ca: @connectionOptions.ca
-        throw new Error("Please provide a private key to connect through SSL.") unless sslOptions.key?
-        
         @_writeMessage(new FrontendMessage.SSLRequest)
         @connection.once 'data', (buffer) =>
           if 'S' == buffer.toString('utf-8')
             tls      = require 'tls'
             starttls = require './starttls'
+            
+            sslOptions = key: @connectionOptions.key, cert: @connectionOptions.cert, ca: @connectionOptions.ca
+            sslOptions.key ?= fs.readFileSync("#{__dirname}/../res/default-client-key.pem")
             
             conn = starttls @connection, sslOptions, =>
               if !conn.authorized && @connectionOptions.rejectUnauthorized
