@@ -23,13 +23,10 @@ class Connection extends EventEmitter
   connect: (callback) ->
     @connectedCallback = callback
     @connection = net.createConnection @connectionOptions.port, @connectionOptions.host
-
+    
     @connection.on 'connect', =>
-
-      @connection.on 'close',   @_onClose.bind(this)
-      @connection.on 'error',   @_onError.bind(this)
-      @connection.on 'timeout', @_onTimeout.bind(this)
-
+      @_bindEventListeners()
+      
       if @connectionOptions.secure
         
         sslOptions = key: @connectionOptions.key, cert: @connectionOptions.cert, ca: @connectionOptions.ca
@@ -45,8 +42,10 @@ class Connection extends EventEmitter
               if !conn.authorized && @connectionOptions.rejectUnauthorized
                 @emit 'error', new Error(conn.authorizationError)
               else
-              @connection = conn
-              @_handshake()
+                @emit 'warn', conn.authorizationError unless conn.authorized
+                @connection = conn
+                @_bindEventListeners()
+                @_handshake()
               
           else if @connectionOptions.secure == true || @connectionOptions.secure == 'required'
             @emit 'error', new Error("The server does not support SSL connection")
@@ -54,6 +53,11 @@ class Connection extends EventEmitter
             @_handshake()
       else
         @_handshake()
+
+  _bindEventListeners: ->
+    @connection.on 'close',   @_onClose.bind(this)
+    @connection.on 'error',   @_onError.bind(this)
+    @connection.on 'timeout', @_onTimeout.bind(this)
 
   disconnect: ->
     @connection.end()
@@ -74,7 +78,9 @@ class Connection extends EventEmitter
     authenticationHandler = (msg) =>
       switch msg.method 
         when Authentication.methods.OK
-          @once 'ReadyForQuery', (msg) => @connectedCallback(this)
+          @once 'ReadyForQuery', (msg) => 
+            @connected = true
+            @connectedCallback(this)
           
         when Authentication.methods.CLEARTEXT_PASSWORD, Authentication.methods.MD5_PASSWORD
           @_writeMessage(new FrontendMessage.Password(@connectionOptions.password, msg.method, salt: msg.salt, user: @connectionOptions.user))
@@ -84,9 +90,9 @@ class Connection extends EventEmitter
           throw new Error("Autentication method #{msg.method} not supported.")
 
     @once 'Authentication', authenticationHandler
-    @on 'ReadyForQuery',   (msg) => @transactionStatus = msg.transactionStatus
     @on 'ParameterStatus', (msg) => @parameters[msg.name] = msg.value
     @on 'BackendKeyData',  (msg) => [@pid, @key] = [msg.pid, msg.key]
+    @on 'ReadyForQuery',   (msg) => @transactionStatus = msg.transactionStatus
 
 
   _onData: (buffer) ->
