@@ -14,6 +14,7 @@ class Connection extends EventEmitter
     @connectionOptions.host   ||= 'localhost'
     @connectionOptions.port   ||= 5433
   
+    @busy = false
     @parameters = {}
     @key = null
     @pid = null
@@ -28,7 +29,7 @@ class Connection extends EventEmitter
     @connection.on 'connect', =>
       @_bindEventListeners()
       
-      if @connectionOptions.secure
+      if @connectionOptions.ssl
         @_writeMessage(new FrontendMessage.SSLRequest)
         @connection.once 'data', (buffer) =>
           if 'S' == buffer.toString('utf-8')
@@ -40,6 +41,8 @@ class Connection extends EventEmitter
             
             conn = starttls @connection, sslOptions, =>
               if !conn.authorized && @connectionOptions.rejectUnauthorized
+                conn.end()
+                @disconnect()
                 @emit 'error', new Error(conn.authorizationError)
               else
                 @emit 'warn', conn.authorizationError unless conn.authorized
@@ -47,7 +50,7 @@ class Connection extends EventEmitter
                 @_bindEventListeners()
                 @_handshake()
               
-          else if @connectionOptions.secure == true || @connectionOptions.secure == 'required'
+          else if @connectionOptions.ssl == true || @connectionOptions.ssl == 'required'
             @emit 'error', new Error("The server does not support SSL connection")
           else 
             @_handshake()
@@ -64,6 +67,7 @@ class Connection extends EventEmitter
 
 
   query: (sql, callback) ->
+    throw new Error("Connection is busy.") if @busy
     @busy = true
     q = new Query(this, sql)
     q.on "end",   => @busy = false
