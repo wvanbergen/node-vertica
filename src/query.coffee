@@ -1,5 +1,5 @@
 EventEmitter    = require('events').EventEmitter
-OutgoingMessage = require('./outgoing_message')
+OutgoingMessage = require('./frontend_message')
 
 class Query extends EventEmitter
   
