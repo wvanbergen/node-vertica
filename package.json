@@ -33,7 +33,7 @@
   },
   "engine": "node >= 0.4.0",
   "scripts": {
-    "prepublish": "cake clean && cake build && cake test && cake tag && git push",
+    "prepublish": "cake clean && cake build && cake test && cake tag && cake push",
     "test": "cake test"
   }
 }
