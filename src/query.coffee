@@ -6,11 +6,14 @@ class Query extends EventEmitter
   constructor: (@connection, sql) ->
     
     @connection._writeMessage(new OutgoingMessage.Query(sql))
-    
-    @connection.once 'RowDescription',  @onRowDescription.bind(this)
-    @connection.on "DataRow",           @onDataRow.bind(this)
-    @connection.once 'CommandComplete', @onCommandComplete.bind(this)
-    @connection.once 'ErrorResponse',   @onErrorResponse.bind(this)
+    @connection.once 'EmptyQueryResponse', @onEmptyQuery.bind(this)
+    @connection.once 'RowDescription',     @onRowDescription.bind(this)
+    @connection.on "DataRow",              @onDataRow.bind(this)
+    @connection.once 'CommandComplete',    @onCommandComplete.bind(this)
+    @connection.once 'ErrorResponse',      @onErrorResponse.bind(this)
+  
+  onEmptyQuery: ->
+    @emit 'error', "The query was empty!"
   
   onRowDescription: (msg) ->
     @fields = []

@@ -37,6 +37,10 @@ class BackendMessage.ParameterStatus extends BackendMessage
     @value = buffer.readZeroTerminatedString(@name.length + 1)
     
 
+class BackendMessage.EmptyQueryResponse extends BackendMessage
+  typeId: 73 # I
+
+
 class BackendMessage.RowDescription extends BackendMessage
   typeId: 84 # T
   
