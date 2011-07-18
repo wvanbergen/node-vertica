@@ -64,33 +64,30 @@ stringConverters =
     day    = parseInt(value.slice(8, 10))
     new Date(Date.UTC(year, month, day))
 
+  default: (value) -> value.toString()
+
+
+binaryConverters =
+  default: (value) -> value.toString()
 
 
 fieldConverters =
-  0: # text encoded
-    25:   stringConverters.string
-    1043: stringConverters.string
-    20:   stringConverters.integer
-    21:   stringConverters.integer
-    23:   stringConverters.integer
-    26:   stringConverters.integer
-    700:  stringConverters.integer
-    701:  stringConverters.integer
-    1700: stringConverters.float
-    16:   stringConverters.bool
-    6:    stringConverters.integer
-    12:   stringConverters.datetime
+  0: stringConverters
+  1: binaryConverters
+
 
 class Query.Field
   constructor: (msg) ->
-    @name       = msg.name
-    @tableId    = msg.tableId
-    @fieldIndex = msg.fieldIndex
-    @type       = msg.type
-    @size       = msg.size
-    @modifier   = msg.modifier
-    @formatCode = msg.formatCode
+    @name            = msg.name
+    @tableId         = msg.tableId
+    @tableFieldIndex = msg.tableFieldIndex
+    @typeId          = msg.typeId
+    @type            = msg.type
+    @size            = msg.size
+    @modifier        = msg.modifier
+    @formatCode      = msg.formatCode
     
-    @convert = fieldConverters[@formatCode][@type] || ((value) -> value.toString())
+    @convert = fieldConverters[@formatCode][@type] || fieldConverters[@formatCode].default
+
 
 module.exports = Query

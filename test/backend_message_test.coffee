@@ -9,37 +9,65 @@ vow = vows.describe('BackendMessage')
 
 vow.addBatch 
   'Authentication message':
-    "it should read a message correctly": (topic) ->
+    "it should read a message correctly": ->
       message = BackendMessage.fromBuffer(new Buffer([0x52, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00]))
-
-      assert.equal message.__proto__.constructor, BackendMessage.Authentication 
+      assert.ok message instanceof BackendMessage.Authentication
       assert.equal message.method, 0
 
 
   'ParameterStatus message':
-    "it should read a message correctly": (topic) ->
+    "it should read a message correctly": ->
       message = BackendMessage.fromBuffer(new Buffer([0x53, 0x00, 0x00, 0x00, 0x16, 0x61, 0x70, 0x70, 0x6c, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x00, 0x00]))
-
-      assert.equal message.__proto__.constructor, BackendMessage.ParameterStatus 
+      assert.ok message instanceof BackendMessage.ParameterStatus
       assert.equal message.name,  'application_name'
       assert.equal message.value, ''
 
 
-  'BackendKeyData message':  
-    "it should read a message correctly": (topic) ->
+  'BackendKeyData message':
+    "it should read a message correctly":  ->
       message = BackendMessage.fromBuffer(new Buffer([0x4b, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x95, 0xb4, 0x66, 0x62, 0xa0, 0xd5]))
-
-      assert.equal message.__proto__.constructor, BackendMessage.BackendKeyData 
+      assert.ok message instanceof BackendMessage.BackendKeyData
       assert.equal message.pid, 38324
       assert.equal message.key, 1717739733
 
 
   'ReadyForQuery message':
-    "it should read a message correctly": (topic) ->
+    "it should read a message correctly": ->
       message = BackendMessage.fromBuffer(new Buffer([0x5a, 0x00, 0x00, 0x00, 0x05, 0x49]))
-
-      assert.equal message.__proto__.constructor, BackendMessage.ReadyForQuery
+      assert.ok message instanceof BackendMessage.ReadyForQuery
       assert.equal message.transactionStatus, 0x49
+
+
+  'EmptyQueryResponse message':
+    "it should read a message correctly": ->
+      message = BackendMessage.fromBuffer(new Buffer([0x49, 0x00, 0x00, 0x00, 0x04]))
+      assert.ok message instanceof BackendMessage.EmptyQueryResponse
+
+
+  'RowDescription message':
+    "it should read a message correctly": ->
+      message = BackendMessage.fromBuffer(new Buffer([0x54, 0x00, 0x00, 0x00, 0x1b, 0x00, 0x01, 0x69, 0x64, 0x00, 0x00, 0x00, 0x75, 0x9e, 0x00, 0x01, 0x00, 0x00, 0x00, 0x06, 0x00, 0x08, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00]))
+      assert.ok message instanceof BackendMessage.RowDescription
+      assert.length message.columns, 1
+      assert.equal  message.columns[0].tableId, 30110
+      assert.equal  message.columns[0].tableFieldIndex, 1
+      assert.equal  message.columns[0].typeId, 6
+      assert.equal  message.columns[0].type, "integer"
+
+
+  "DataRow message":
+    "it should read a message correctly": ->
+      message = BackendMessage.fromBuffer(new Buffer([0x44, 0x00, 0x00, 0x00, 0x0e, 0x00, 0x01, 0x00, 0x00, 0x00, 0x04, 0x70, 0x61, 0x69, 0x64]))
+      assert.ok message instanceof BackendMessage.DataRow
+      assert.length message.values, 1
+      assert.equal  String(message.values[0]), 'paid'
+
+
+  "CommandComplete message":
+    "it should read a message correctly": ->
+      message = BackendMessage.fromBuffer(new Buffer([0x43, 0x00, 0x00, 0x00, 0x0b, 0x53, 0x45, 0x4c, 0x45, 0x43, 0x54, 0x00]))
+      assert.ok message instanceof BackendMessage.CommandComplete
+      assert.equal message.status, 'SELECT'
 
 
 vow.export(module)

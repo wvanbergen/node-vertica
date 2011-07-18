@@ -44,6 +44,21 @@ class BackendMessage.EmptyQueryResponse extends BackendMessage
 class BackendMessage.RowDescription extends BackendMessage
   typeId: 84 # T
   
+  fieldTypes:
+    25:   "string"
+    1043: "string"
+    20:   "integer"
+    21:   "integer"
+    23:   "integer"
+    26:   "integer"
+    700:  "integer"
+    701:  "integer"
+    1700: "float"
+    16:   "bool"
+    6:    "integer"
+    9:    "string"
+    12:   "datetime"
+
   read: (buffer) ->
     numberOfFields = buffer.readUInt16(0)
     pos = 2
@@ -54,9 +69,9 @@ class BackendMessage.RowDescription extends BackendMessage
       pos += Buffer.byteLength(name) + 1
       tableId = buffer.readUInt32(pos)
       pos += 4
-      fieldIndex = buffer.readUInt16(pos)
+      tableFieldIndex = buffer.readUInt16(pos)
       pos += 2
-      type = buffer.readUInt32(pos)
+      typeId = buffer.readUInt32(pos)
       pos += 4
       size = buffer.readUInt16(pos)
       pos += 2
@@ -64,8 +79,19 @@ class BackendMessage.RowDescription extends BackendMessage
       pos += 4
       formatCode = buffer.readUInt16(pos)
       pos += 2
-      
-      @columns.push name: name, tableId: tableId, fieldIndex: fieldIndex, type: type, size: size, modifier: modifier, formatCode: formatCode
+
+
+      fieldDescriptor = 
+        name: name
+        tableId: tableId
+        tableFieldIndex: tableFieldIndex
+        typeId: typeId
+        type: @fieldTypes[typeId]
+        size: size
+        modifier: modifier
+        formatCode: formatCode
+    
+      @columns.push fieldDescriptor
 
 
 class BackendMessage.DataRow extends BackendMessage
