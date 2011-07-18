@@ -2,15 +2,21 @@
 
 A pure javascript library to connect to a Vertica database.
 
+## Installation
+
+    npm install vertica
+
 ## Example
 
 ```coffeescript
 
 Vertica = require 'vertica'
 
-connection = Vertica.connect user: "username", password: 'password', database: "database", host: 'localhost', (conn) ->
+connection = Vertica.connect user: "username", password: 'password', database: "database", host: 'localhost', (err) ->
+  throw err if err
   
-  query = conn.query "SELECT * FROM table"
+  # unbuffered
+  query = connection.query "SELECT * FROM table"
   query.on 'fields', (fields) ->
     console.log("Fields:", fields)
 
@@ -19,5 +25,9 @@ connection = Vertica.connect user: "username", password: 'password', database: "
 
   query.on 'end', (status) ->
     console.log("Finished!", status)
+
+  # buffered
+  connection.query "SELECT * FROM table", (err, fields, rows, status) ->
+    console.log err, fields, rows, status
 
 ```
