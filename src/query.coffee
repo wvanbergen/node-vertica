@@ -3,15 +3,23 @@ OutgoingMessage = require('./frontend_message')
 
 class Query extends EventEmitter
   
-  constructor: (@connection, sql, @callback) ->
-    @rows = [] if @callback
-    @connection._writeMessage(new OutgoingMessage.Query(sql))
-    @connection.once 'EmptyQueryResponse', @onEmptyQuery.bind(this)
-    @connection.once 'RowDescription',     @onRowDescription.bind(this)
-    @connection.on "DataRow",              @onDataRow.bind(this)
-    @connection.once 'CommandComplete',    @onCommandComplete.bind(this)
-    @connection.once 'ErrorResponse',      @onErrorResponse.bind(this)
+  constructor: (@connection, @sql, @callback) ->
   
+  execute: () ->
+    @connection.busy = true
+    @emit 'start'
+    
+    @rows = [] if @callback
+    @connection._writeMessage(new OutgoingMessage.Query(@sql))
+    
+    @connection.once 'EmptyQueryResponse', @onEmptyQueryListener      = @onEmptyQuery.bind(this)
+    @connection.on   'RowDescription',     @onRowDescriptionListener  = @onRowDescription.bind(this)
+    @connection.on   'DataRow',            @onDataRowListener         = @onDataRow.bind(this)
+    @connection.on   'CommandComplete',    @onCommandCompleteListener = @onCommandComplete.bind(this)
+    @connection.once 'ErrorResponse',      @onErrorResponseListener   = @onErrorResponse.bind(this)
+    @connection.once 'ReadyForQuery',      @onReadyForQueryListener   = @onReadyForQuery.bind(this)
+
+
   onEmptyQuery: ->
     @emit 'error', "The query was empty!"
     @callback("The query was empty!") if @callback
@@ -22,7 +30,7 @@ class Query extends EventEmitter
       field = new Query.Field(column)
       @emit 'field', field
       @fields.push field
-      
+
     @emit 'fields', @fields
     
   onDataRow: (msg) ->
@@ -33,20 +41,28 @@ class Query extends EventEmitter
     @rows.push row if @callback
     @emit 'row', row
     
+  onReadyForQuery: (msg) ->
+    @_removeAllListeners()
+    @connection.busy = false
+
   onCommandComplete: (msg) ->
-    @connection.removeAllListeners "DataRow"
-    @connection.removeAllListeners "ErrorResponse"
-    
     @emit 'end', msg.status
-    @callback(null, @fields, @rows) if @callback
+    @callback(null, @fields, @rows, msg.status) if @callback
+    @rows = [] if @callback
     
   onErrorResponse: (msg) ->
-    @connection.removeAllListeners "RowDescription"
-    @connection.removeAllListeners "DataRow"
-    @connection.removeAllListeners "CommandComplete"
-    
+    @_removeAllListeners()
     @emit 'error', msg
     @callback(msg.message) if @callback
+
+  _removeAllListeners: () ->
+    @connection.removeListener 'EmptyQueryResponse', @onEmptyQueryListener
+    @connection.removeListener 'RowDescription',     @onRowDescriptionListener
+    @connection.removeListener 'DataRow',            @onDataRowListener
+    @connection.removeListener 'CommandComplete',    @onCommandCompleteListener
+    @connection.removeListener 'ErrorResponse',      @onErrorResponseListener
+    @connection.removeListener 'ReadyForQuery',      @onReadyForQueryListener
+
 
 stringConverters =
   string:   (value) -> value.toString()

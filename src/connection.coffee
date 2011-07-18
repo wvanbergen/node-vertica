@@ -16,6 +16,7 @@ class Connection extends EventEmitter
   
     @connected = false
     @busy      = true
+    @queue     = []
     
     @parameters = {}
     @key = null
@@ -68,11 +69,18 @@ class Connection extends EventEmitter
   disconnect: ->
     @connection.end()
 
+  _schedule: (job) ->
+    if @busy
+      @queue.push job
+      @emit 'queue', job
+    else
+      job.execute()
+      
+    return job
+    
 
   query: (sql, callback) ->
-    throw new Error("Connection is busy.") if @busy
-    @busy = true
-    return new Query(this, sql, callback)
+    @_schedule(new Query(this, sql, callback))
 
 
   _handshake: ->
@@ -82,7 +90,9 @@ class Connection extends EventEmitter
     authenticationHandler = (msg) =>
       switch msg.method 
         when Authentication.methods.OK
-          @once 'ReadyForQuery', (msg) => @connectedCallback(this)
+          @once 'ReadyForQuery', (msg) => 
+            @busy = false
+            @connectedCallback(this)
           
         when Authentication.methods.CLEARTEXT_PASSWORD, Authentication.methods.MD5_PASSWORD
           @_writeMessage(new FrontendMessage.Password(@connectionOptions.password, msg.method, salt: msg.salt, user: @connectionOptions.user))
@@ -94,10 +104,15 @@ class Connection extends EventEmitter
     @once 'Authentication', authenticationHandler
     @on 'ParameterStatus', (msg) => @parameters[msg.name] = msg.value
     @on 'BackendKeyData',  (msg) => [@pid, @key] = [msg.pid, msg.key]
+    
     @on 'ReadyForQuery',   (msg) => 
       @transactionStatus = msg.transactionStatus
-      @busy = false
-      @emit 'ready', this
+      if @queue.length > 0
+        job = @queue.shift()
+        @emit 'dequeue', job
+        job.execute()
+      else
+        @emit 'ready', this
 
 
   _onData: (buffer) ->
@@ -112,7 +127,7 @@ class Connection extends EventEmitter
     
     size = @incomingData.readUInt32(1) # skip the message ID
     while size + 1 <= @incomingData.length
-
+      console.log @incomingData.slice(0, size + 1)
       # parse message
       message = BackendMessage.fromBuffer(@incomingData.slice(0, size + 1))
       @emit 'message', message
