@@ -14,7 +14,9 @@ class Connection extends EventEmitter
     @connectionOptions.host   ||= 'localhost'
     @connectionOptions.port   ||= 5433
   
-    @busy = false
+    @connected = false
+    @busy      = true
+    
     @parameters = {}
     @key = null
     @pid = null
@@ -27,6 +29,7 @@ class Connection extends EventEmitter
     @connection = net.createConnection @connectionOptions.port, @connectionOptions.host
     
     @connection.on 'connect', =>
+      @connected = true
       @_bindEventListeners()
       
       if @connectionOptions.ssl
@@ -82,9 +85,7 @@ class Connection extends EventEmitter
     authenticationHandler = (msg) =>
       switch msg.method 
         when Authentication.methods.OK
-          @once 'ReadyForQuery', (msg) => 
-            @connected = true
-            @connectedCallback(this)
+          @once 'ReadyForQuery', (msg) => @connectedCallback(this)
           
         when Authentication.methods.CLEARTEXT_PASSWORD, Authentication.methods.MD5_PASSWORD
           @_writeMessage(new FrontendMessage.Password(@connectionOptions.password, msg.method, salt: msg.salt, user: @connectionOptions.user))
@@ -96,7 +97,10 @@ class Connection extends EventEmitter
     @once 'Authentication', authenticationHandler
     @on 'ParameterStatus', (msg) => @parameters[msg.name] = msg.value
     @on 'BackendKeyData',  (msg) => [@pid, @key] = [msg.pid, msg.key]
-    @on 'ReadyForQuery',   (msg) => @transactionStatus = msg.transactionStatus
+    @on 'ReadyForQuery',   (msg) => 
+      @transactionStatus = msg.transactionStatus
+      @busy = false
+      @emit 'ready', this
 
 
   _onData: (buffer) ->
@@ -126,12 +130,10 @@ class Connection extends EventEmitter
     @connected = false
     @emit 'close'
     
-  _onTimeout: (exception) ->
-    console.error util.inspect(exception)
-    @emit 'timeout', exception
+  _onTimeout: () ->
+    @emit 'timeout'
     
   _onError: (exception) ->
-    console.error util.inspect(exception)
     @emit 'error', exception
     
   _writeMessage: (msg, callback) ->
