@@ -35,7 +35,16 @@ class BackendMessage.ParameterStatus extends BackendMessage
   read: (buffer) ->
     @name  = buffer.readZeroTerminatedString(0)
     @value = buffer.readZeroTerminatedString(@name.length + 1)
-    
+
+
+class BackendMessage.NotificationResponse extends BackendMessage
+  typeId: 65 # A
+  
+  read: (buffer) ->
+    @pid = buffer.readUInt32(4)
+    @channel = buffer.readZeroTerminatedString(4)
+    @payload = buffer.readZeroTerminatedString(@channel.length + 5)
+
 
 class BackendMessage.EmptyQueryResponse extends BackendMessage
   typeId: 73 # I
@@ -151,6 +160,10 @@ class BackendMessage.ErrorResponse extends BackendMessage
       
       fieldCode = buffer.readUInt8(pos)
       pos += 1
+
+
+class BackendMessage.NoticeResponse extends BackendMessage.ErrorResponse
+  typeId: 78 # N
 
 
 class BackendMessage.ReadyForQuery extends BackendMessage
