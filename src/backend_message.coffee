@@ -147,7 +147,7 @@ class BackendMessage.ErrorResponse extends BackendMessage
     70:  'File'
     76:  'Line'
     82:  'Routine'
-    
+  
   read: (buffer) ->
     @information = {}
     
@@ -161,6 +161,7 @@ class BackendMessage.ErrorResponse extends BackendMessage
       fieldCode = buffer.readUInt8(pos)
       pos += 1
 
+    @message = @information['Message']
 
 class BackendMessage.NoticeResponse extends BackendMessage.ErrorResponse
   typeId: 78 # N

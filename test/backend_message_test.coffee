@@ -88,6 +88,6 @@ vow.addBatch
       assert.equal message.information['File'], 'vertica.c'
       assert.equal message.information['Line'], '2380'
       assert.equal message.information['Routine'], 'checkVerticaUtilityStmtSupported'
-
+      assert.equal message.message, 'command NOTIFY is not supported'
 
 vow.export(module)
