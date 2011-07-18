@@ -3,8 +3,8 @@ OutgoingMessage = require('./frontend_message')
 
 class Query extends EventEmitter
   
-  constructor: (@connection, sql) ->
-    
+  constructor: (@connection, sql, @callback) ->
+    @rows = [] if @callback
     @connection._writeMessage(new OutgoingMessage.Query(sql))
     @connection.once 'EmptyQueryResponse', @onEmptyQuery.bind(this)
     @connection.once 'RowDescription',     @onRowDescription.bind(this)
@@ -14,6 +14,7 @@ class Query extends EventEmitter
   
   onEmptyQuery: ->
     @emit 'error', "The query was empty!"
+    @callback("The query was empty!") if @callback
   
   onRowDescription: (msg) ->
     @fields = []
@@ -29,12 +30,15 @@ class Query extends EventEmitter
     for value, index in msg.values
       row.push if value? then @fields[index].convert(value) else null
     
+    @rows.push row if @callback
     @emit 'row', row
     
   onCommandComplete: (msg) ->
     @connection.removeAllListeners "DataRow"
     @connection.removeAllListeners "ErrorResponse"
+    
     @emit 'end', msg.status
+    @callback(null, @fields, @rows) if @callback
     
   onErrorResponse: (msg) ->
     @connection.removeAllListeners "RowDescription"
@@ -42,6 +46,7 @@ class Query extends EventEmitter
     @connection.removeAllListeners "CommandComplete"
     
     @emit 'error', msg
+    @callback(msg.message) if @callback
 
 stringConverters =
   string:   (value) -> value.toString()

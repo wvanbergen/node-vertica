@@ -72,10 +72,7 @@ class Connection extends EventEmitter
   query: (sql, callback) ->
     throw new Error("Connection is busy.") if @busy
     @busy = true
-    q = new Query(this, sql)
-    q.on "end",   => @busy = false
-    q.on "error", => @busy = false
-    return q
+    return new Query(this, sql, callback)
 
 
   _handshake: ->
