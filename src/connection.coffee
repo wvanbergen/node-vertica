@@ -69,30 +69,36 @@ class Connection extends EventEmitter
   disconnect: ->
     @connection.end()
 
-  _schedule: (job) ->
+  _scheduleJob: (job) ->
     if @busy
       @queue.push job
-      @emit 'queue', job
+      @emit 'queuejob', job
     else
-      job.execute()
+      @_executeJob(job)
       
     return job
+  
+  _executeJob: (job) ->
+    throw "Connection is closed" unless @connected
+    throw "Connection is busy" if @busy
+
+    @busy = true
+    job.execute()
     
-
   query: (sql, callback) ->
-    @_schedule(new Query(this, sql, callback))
-
+    @_scheduleJob(new Query(this, sql, callback))
 
   _handshake: ->
-    @connection.on 'data', @_onData.bind(this)
-    @_writeMessage(new FrontendMessage.Startup(@connectionOptions.user, @connectionOptions.database))
+
+    authenticationFailureHandler = (err) =>
+      @connectedCallback(err.message) if @connectedCallback
 
     authenticationHandler = (msg) =>
       switch msg.method 
         when Authentication.methods.OK
           @once 'ReadyForQuery', (msg) => 
-            @busy = false
-            @connectedCallback(this)
+            @removeListener 'ErrorResponse', authenticationFailureHandler
+            @connectedCallback(null) if @connectedCallback
           
         when Authentication.methods.CLEARTEXT_PASSWORD, Authentication.methods.MD5_PASSWORD
           @_writeMessage(new FrontendMessage.Password(@connectionOptions.password, msg.method, salt: msg.salt, user: @connectionOptions.user))
@@ -101,16 +107,19 @@ class Connection extends EventEmitter
         else
           throw new Error("Autentication method #{msg.method} not supported.")
 
+    @connection.on 'data', @_onData.bind(this)
+    @_writeMessage(new FrontendMessage.Startup(@connectionOptions.user, @connectionOptions.database))
+
+    @once 'ErrorResponse',  authenticationFailureHandler
     @once 'Authentication', authenticationHandler
-    @on 'ParameterStatus', (msg) => @parameters[msg.name] = msg.value
-    @on 'BackendKeyData',  (msg) => [@pid, @key] = [msg.pid, msg.key]
+    @on   'ParameterStatus', (msg) => @parameters[msg.name] = msg.value
+    @on   'BackendKeyData',  (msg) => [@pid, @key] = [msg.pid, msg.key]
     
     @on 'ReadyForQuery',   (msg) => 
       @transactionStatus = msg.transactionStatus
+      @busy = false
       if @queue.length > 0
-        job = @queue.shift()
-        @emit 'dequeue', job
-        job.execute()
+        @_executeJob(@queue.shift())
       else
         @emit 'ready', this
 
@@ -125,9 +134,9 @@ class Connection extends EventEmitter
       buffer.copy(bufferedData, @incomingData.length)
       @incomingData = bufferedData
     
-    size = @incomingData.readUInt32(1) # skip the message ID
+    size = @incomingData.readUInt32(1) # start at 1 to skip the message ID
     while size + 1 <= @incomingData.length
-      console.log @incomingData.slice(0, size + 1)
+
       # parse message
       message = BackendMessage.fromBuffer(@incomingData.slice(0, size + 1))
       @emit 'message', message
@@ -138,9 +147,9 @@ class Connection extends EventEmitter
       size = @incomingData.readUInt32(1)
 
 
-  _onClose: ->
+  _onClose: (error)->
     @connected = false
-    @emit 'close'
+    @emit 'close', error
     
   _onTimeout: () ->
     @emit 'timeout'

@@ -4,9 +4,8 @@ OutgoingMessage = require('./frontend_message')
 class Query extends EventEmitter
   
   constructor: (@connection, @sql, @callback) ->
-  
+    
   execute: () ->
-    @connection.busy = true
     @emit 'start'
     
     @rows = [] if @callback
@@ -43,7 +42,6 @@ class Query extends EventEmitter
     
   onReadyForQuery: (msg) ->
     @_removeAllListeners()
-    @connection.busy = false
 
   onCommandComplete: (msg) ->
     @emit 'end', msg.status
