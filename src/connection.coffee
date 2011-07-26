@@ -10,8 +10,9 @@ Query           = require('./query')
 class Connection extends EventEmitter
   
   constructor: (@connectionOptions) ->
-    @connectionOptions.host   ||= 'localhost'
-    @connectionOptions.port   ||= 5433
+    @connectionOptions.host   ?= 'localhost'
+    @connectionOptions.port   ?= 5433
+    @connectionOptions.ssl    ?= 'optional'
   
     @connected = false
     @busy      = true
@@ -42,7 +43,7 @@ class Connection extends EventEmitter
             sslOptions = key: @connectionOptions.key, cert: @connectionOptions.cert, ca: @connectionOptions.ca
             
             conn = starttls @connection, sslOptions, =>
-              if !conn.authorized && @connectionOptions.rejectUnauthorized
+              if !conn.authorized && @connectionOptions.ssl == 'verified'
                 conn.end()
                 @disconnect()
                 @emit 'error', new Error(conn.authorizationError)
