@@ -20,7 +20,7 @@ class Query extends EventEmitter
 
 
   onEmptyQuery: ->
-    @emit 'error', "The query was empty!"
+    @emit 'error', "The query was empty!" unless @callback
     @callback("The query was empty!") if @callback
   
   onRowDescription: (msg) ->
@@ -50,7 +50,7 @@ class Query extends EventEmitter
     
   onErrorResponse: (msg) ->
     @_removeAllListeners()
-    @emit 'error', msg
+    @emit 'error', msg unless @callback
     @callback(msg.message) if @callback
 
   _removeAllListeners: () ->
