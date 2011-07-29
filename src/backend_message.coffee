@@ -63,10 +63,11 @@ class BackendMessage.RowDescription extends BackendMessage
     700:  "integer"
     701:  "integer"
     1700: "float"
-    16:   "bool"
+    5:    "bool"
     6:    "integer"
     9:    "string"
     12:   "datetime"
+    16:   "decimal"
 
   read: (buffer) ->
     numberOfFields = buffer.readUInt16(0)

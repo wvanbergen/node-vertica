@@ -65,7 +65,8 @@ class Query extends EventEmitter
 stringConverters =
   string:   (value) -> value.toString()
   integer:  (value) -> parseInt(value)
-  float:    (value) -> parseValue(value)
+  float:    (value) -> parseFloat(value)
+  decimal:  (value) -> parseFloat(value)
   bool:     (value) -> value.toString() == 't'
   
   datetime: (value) ->
