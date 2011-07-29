@@ -134,7 +134,7 @@ class Connection extends EventEmitter
       @incomingData = bufferedData
     
     size = @incomingData.readUInt32(1) # start at 1 to skip the message ID
-    while size + 1 <= @incomingData.length
+    while @incomingData.length >= 5 && size + 1 <= @incomingData.length
 
       # parse message
       message = BackendMessage.fromBuffer(@incomingData.slice(0, size + 1))
