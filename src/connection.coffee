@@ -88,7 +88,6 @@ class Connection extends EventEmitter
     @_scheduleJob(new Query(this, sql, callback))
 
   _handshake: ->
-
     authenticationFailureHandler = (err) =>
       @connectedCallback(err.message) if @connectedCallback
 
@@ -97,7 +96,7 @@ class Connection extends EventEmitter
         when Authentication.methods.OK
           @once 'ReadyForQuery', (msg) => 
             @removeListener 'ErrorResponse', authenticationFailureHandler
-            @connectedCallback(null) if @connectedCallback
+            @connectedCallback(null, this) if @connectedCallback
           
         when Authentication.methods.CLEARTEXT_PASSWORD, Authentication.methods.MD5_PASSWORD
           @_writeMessage(new FrontendMessage.Password(@connectionOptions.password, msg.method, salt: msg.salt, user: @connectionOptions.user))
