@@ -7,7 +7,11 @@ conn = Vertica.connect connectionOptions, (err) ->
   throw err if err
 
 
-conn.query "SELECT true, total_price FROM invoices ORDER BY invoice_id DESC LIMIT 1000", (args...) -> 
+query = """
+   SELECT NULL, DATE 'now', TIME 'now', TIMESTAMP 'now', INTERVAL '9 DAY'
+"""
+
+conn.query query, (args...) -> 
   console.log "Query 1 done"
   console.log args...
 
