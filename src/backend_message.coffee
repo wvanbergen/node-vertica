@@ -54,6 +54,18 @@ class BackendMessage.RowDescription extends BackendMessage
   typeId: 84 # T
   
   fieldTypes:
+    5:    "bool"
+    6:    "integer"
+    7:    "float"
+    8:    "string"
+    9:    "string"
+    10:   "date"
+    11:   "time"
+    12:   "datetime"
+    13:   "datetime"
+    14:   "interval"
+    15:   "time"
+    16:   "decimal"
     25:   "string"
     1043: "string"
     20:   "integer"
@@ -63,11 +75,6 @@ class BackendMessage.RowDescription extends BackendMessage
     700:  "integer"
     701:  "integer"
     1700: "float"
-    5:    "bool"
-    6:    "integer"
-    9:    "string"
-    12:   "datetime"
-    16:   "decimal"
 
   read: (buffer) ->
     numberOfFields = buffer.readUInt16(0)
