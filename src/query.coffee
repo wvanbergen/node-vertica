@@ -64,24 +64,24 @@ class Query extends EventEmitter
 
 stringConverters =
   string:   (value) -> value.toString()
-  integer:  (value) -> parseInt(value)
+  integer:  (value) -> +value
   float:    (value) -> parseFloat(value)
   decimal:  (value) -> parseFloat(value)
   bool:     (value) -> value.toString() == 't'
   
   datetime: (value) ->
-    year   = parseInt(value.slice(0, 4))
-    month  = parseInt(value.slice(5, 7))
-    day    = parseInt(value.slice(8, 10))
-    hour   = parseInt(value.slice(11, 13))
-    minute = parseInt(value.slice(14, 16))
-    second = parseInt(value.slice(17, 19))
+    year   = +value.slice(0, 4)
+    month  = +value.slice(5, 7) - 1
+    day    = +value.slice(8, 10)
+    hour   = +value.slice(11, 13)
+    minute = +value.slice(14, 16)
+    second = +value.slice(17, 19)
     new Date(Date.UTC(year, month, day, hour, minute, second))
     
   date: (value) ->
-    year   = parseInt(value.slice(0, 4))
-    month  = parseInt(value.slice(5, 7))
-    day    = parseInt(value.slice(8, 10))
+    year   = +value.slice(0, 4)
+    month  = +value.slice(5, 7) - 1
+    day    = +value.slice(8, 10)
     new Date(Date.UTC(year, month, day))
 
   default: (value) -> value.toString()
