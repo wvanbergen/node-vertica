@@ -23,19 +23,16 @@ class Query extends EventEmitter
     @callback("The query was empty!") if @callback
   
   onRowDescription: (msg) ->
-    throw "Cannot handle muti-queries with a callback!" if @callback? && @fields?
+    throw "Cannot handle muti-queries with a callback!" if @callback? && @status?
     
-    fields = []
+    @fields = []
     for column in msg.columns
       field = new Query.Field(column)
       @emit 'field', field
-      fields.push field
+      @fields.push field
 
-    if @callback
-      @fields = fields 
-      @rows   = []
-      
-    @emit 'fields', fields
+    @rows = [] if @callback
+    @emit 'fields', @fields
     
   onDataRow: (msg) ->
     row = []
@@ -46,9 +43,7 @@ class Query extends EventEmitter
     @emit 'row', row
     
   onReadyForQuery: (msg) ->
-    if @callback
-      @callback(null, @fields, @rows, @status)
-      
+    @callback(null, @fields, @rows, @status) if @callback
     @_removeAllListeners()
 
   onCommandComplete: (msg) ->
