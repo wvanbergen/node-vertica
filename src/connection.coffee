@@ -83,9 +83,22 @@ class Connection extends EventEmitter
 
     @busy = true
     job.execute()
+    return job
+
+  _processJobQueue: () ->
+    if @queue.length > 0
+      @_executeJob(@queue.shift())
+    else
+      @emit 'ready', this
     
   query: (sql, callback) ->
     @_scheduleJob(new Query(this, sql, callback))
+
+  _queryDirect: (sql, callback) ->
+    @_executeJob(new Query(this, sql, callback))
+    
+
+
 
   _handshake: ->
     authenticationFailureHandler = (err) =>
@@ -96,7 +109,7 @@ class Connection extends EventEmitter
         when Authentication.methods.OK
           @once 'ReadyForQuery', (msg) => 
             @removeListener 'ErrorResponse', authenticationFailureHandler
-            @connectedCallback(null, this) if @connectedCallback
+            @_initializeConnection()
           
         when Authentication.methods.CLEARTEXT_PASSWORD, Authentication.methods.MD5_PASSWORD
           @_writeMessage(new FrontendMessage.Password(@connectionOptions.password, msg.method, salt: msg.salt, user: @connectionOptions.user))
@@ -112,15 +125,49 @@ class Connection extends EventEmitter
     @once 'Authentication', authenticationHandler
     @on   'ParameterStatus', (msg) => @parameters[msg.name] = msg.value
     @on   'BackendKeyData',  (msg) => [@pid, @key] = [msg.pid, msg.key]
-    
-    @on 'ReadyForQuery',   (msg) => 
-      @transactionStatus = msg.transactionStatus
+    @on   'ReadyForQuery', (msg) => 
       @busy = false
-      if @queue.length > 0
-        @_executeJob(@queue.shift())
-      else
-        @emit 'ready', this
+      @transactionStatus = msg.transactionStatus
 
+
+  _initializeConnection: () ->
+    
+    initializers = [@_initializeRoles, @_initializeSearchPath]
+    initializers.push @connectionOptions.initializer if @connectionOptions.initializer?
+    
+    chain = @_initializationSuccess.bind(this)
+    for initializer in initializers
+      chain = initializer.bind(this, chain, @_initializationFailure.bind(this))
+    
+    chain.call(this)
+
+
+  _initializeRoles: (next, fail) ->
+    if @connectionOptions.role
+      roles = if @connectionOptions.role instanceof Array then @connectionOptions.role else [@connectionOptions.role]
+      @_queryDirect "SET ROLE #{roles.join(', ')}", (err, result) =>
+        if err? then fail(err) else next()
+    else
+      next()
+
+
+  _initializeSearchPath: (next, fail) ->
+    if @connectionOptions.searchPath
+      searchPath = if @connectionOptions.searchPath instanceof Array then @connectionOptions.searchPath else [@connectionOptions.searchPath]
+      @_queryDirect "SET SEARCH_PATH TO #{searchPath.join(', ')}", (err, result) =>
+        if err? then fail(err) else next()
+    else
+      next()
+
+
+  _initializationSuccess: ->
+    @on 'ReadyForQuery', @_processJobQueue.bind(this)
+    @_processJobQueue()
+    @connectedCallback(null, this) if @connectedCallback
+    
+  _initializationFailure: (err) ->
+    if @connectedCallback then @connectedCallback(err) else throw err
+      
 
   _onData: (buffer) ->
     # Append the new data with the previous buffer's residue if there was any.
