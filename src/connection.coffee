@@ -139,7 +139,7 @@ class Connection extends EventEmitter
     for initializer in initializers
       chain = initializer.bind(this, chain, @_initializationFailure.bind(this))
     
-    chain.call(this)
+    chain()
 
 
   _initializeRoles: (next, fail) ->
