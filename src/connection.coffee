@@ -131,8 +131,9 @@ class Connection extends EventEmitter
 
 
   _initializeConnection: () ->
-    
-    initializers = [@_initializeRoles, @_initializeSearchPath]
+    initializers = []
+    initializers.push @_initializeRoles              if @connectionOptions.role?
+    initializers.push @_initializeSearchPath         if @connectionOptions.searchPath?
     initializers.push @connectionOptions.initializer if @connectionOptions.initializer?
     
     chain = @_initializationSuccess.bind(this)
@@ -143,21 +144,15 @@ class Connection extends EventEmitter
 
 
   _initializeRoles: (next, fail) ->
-    if @connectionOptions.role
-      roles = if @connectionOptions.role instanceof Array then @connectionOptions.role else [@connectionOptions.role]
-      @_queryDirect "SET ROLE #{roles.join(', ')}", (err, result) =>
-        if err? then fail(err) else next()
-    else
-      next()
+    roles = if @connectionOptions.role instanceof Array then @connectionOptions.role else [@connectionOptions.role]
+    @_queryDirect "SET ROLE #{roles.join(', ')}", (err, result) =>
+      if err? then fail(err) else next()
 
 
   _initializeSearchPath: (next, fail) ->
-    if @connectionOptions.searchPath
-      searchPath = if @connectionOptions.searchPath instanceof Array then @connectionOptions.searchPath else [@connectionOptions.searchPath]
-      @_queryDirect "SET SEARCH_PATH TO #{searchPath.join(', ')}", (err, result) =>
-        if err? then fail(err) else next()
-    else
-      next()
+    searchPath = if @connectionOptions.searchPath instanceof Array then @connectionOptions.searchPath else [@connectionOptions.searchPath]
+    @_queryDirect "SET SEARCH_PATH TO #{searchPath.join(', ')}", (err, result) =>
+      if err? then fail(err) else next()
 
 
   _initializationSuccess: ->
