@@ -134,6 +134,7 @@ class Connection extends EventEmitter
     initializers = []
     initializers.push @_initializeRoles              if @connectionOptions.role?
     initializers.push @_initializeSearchPath         if @connectionOptions.searchPath?
+    initializers.push @_initializeTimezone           if @connectionOptions.timezone?
     initializers.push @connectionOptions.initializer if @connectionOptions.initializer?
     
     chain = @_initializationSuccess.bind(this)
@@ -152,6 +153,11 @@ class Connection extends EventEmitter
   _initializeSearchPath: (next, fail) ->
     searchPath = if @connectionOptions.searchPath instanceof Array then @connectionOptions.searchPath else [@connectionOptions.searchPath]
     @_queryDirect "SET SEARCH_PATH TO #{searchPath.join(', ')}", (err, result) =>
+      if err? then fail(err) else next()
+
+
+  _initializeTimezone: (next, fail) ->
+    @_queryDirect "SET TIMEZONE TO '#{@connectionOptions.timezone}'", (err, result) =>
       if err? then fail(err) else next()
 
 
