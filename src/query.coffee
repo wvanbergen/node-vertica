@@ -1,5 +1,6 @@
 EventEmitter    = require('events').EventEmitter
 OutgoingMessage = require('./frontend_message')
+ValueDecorders  = require('./value_decoders')
 
 class Query extends EventEmitter
   
@@ -37,6 +38,9 @@ class Query extends EventEmitter
   onDataRow: (msg) ->
     row = []
     for value, index in msg.values
+      console.log value.toString('utf8')
+      process.stdout.write ("#{byte}" for byte in value).join(", ")
+      process.stdout.write("\n")
       row.push if value? then @fields[index].convert(value) else null
     
     @rows.push row if @callback
@@ -65,40 +69,6 @@ class Query extends EventEmitter
     @connection.removeListener 'ReadyForQuery',      @onReadyForQueryListener
 
 
-stringConverters =
-  string:   (value) -> value.toString()
-  integer:  (value) -> +value
-  float:    (value) -> parseFloat(value)
-  decimal:  (value) -> parseFloat(value)
-  bool:     (value) -> value.toString() == 't'
-  
-  datetime: (value) ->
-    year   = +value.slice(0, 4)
-    month  = +value.slice(5, 7) - 1
-    day    = +value.slice(8, 10)
-    hour   = +value.slice(11, 13)
-    minute = +value.slice(14, 16)
-    second = +value.slice(17, 19)
-    new Date(Date.UTC(year, month, day, hour, minute, second))
-    
-  date: (value) ->
-    year   = +value.slice(0, 4)
-    month  = +value.slice(5, 7) - 1
-    day    = +value.slice(8, 10)
-    new Date(Date.UTC(year, month, day))
-
-  default: (value) -> value.toString()
-
-
-binaryConverters =
-  default: (value) -> value.toString()
-
-
-fieldConverters =
-  0: stringConverters
-  1: binaryConverters
-
-
 class Query.Field
   constructor: (msg) ->
     @name            = msg.name
@@ -110,7 +80,7 @@ class Query.Field
     @modifier        = msg.modifier
     @formatCode      = msg.formatCode
     
-    @convert = fieldConverters[@formatCode][@type] || fieldConverters[@formatCode].default
+    @convert = ValueDecorders[@formatCode][@type] || ValueDecorders[@formatCode].default
 
 
 module.exports = Query
