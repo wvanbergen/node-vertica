@@ -38,9 +38,6 @@ class Query extends EventEmitter
   onDataRow: (msg) ->
     row = []
     for value, index in msg.values
-      console.log value.toString('utf8')
-      process.stdout.write ("#{byte}" for byte in value).join(", ")
-      process.stdout.write("\n")
       row.push if value? then @fields[index].convert(value) else null
     
     @rows.push row if @callback
@@ -54,7 +51,6 @@ class Query extends EventEmitter
     @status = msg.status if @callback
     @emit 'end', msg.status
 
-    
   onErrorResponse: (msg) ->
     @_removeAllListeners()
     @emit 'error', msg unless @callback

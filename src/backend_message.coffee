@@ -54,9 +54,9 @@ class BackendMessage.RowDescription extends BackendMessage
   typeId: 84 # T
   
   fieldTypes:
-    5:    "bool"
+    5:    "boolean"
     6:    "integer"
-    7:    "float"
+    7:    "real"
     8:    "string"
     9:    "string"
     10:   "date"
@@ -65,7 +65,7 @@ class BackendMessage.RowDescription extends BackendMessage
     13:   "timestamp"
     14:   "interval"
     15:   "time"
-    16:   "decimal"
+    16:   "numeric"
     25:   "string"
     1043: "string"
     20:   "integer"
@@ -74,7 +74,7 @@ class BackendMessage.RowDescription extends BackendMessage
     26:   "integer"
     700:  "integer"
     701:  "integer"
-    1700: "float"
+    1700: "real"
 
   read: (buffer) ->
     numberOfFields = buffer.readUInt16(0)
@@ -177,11 +177,11 @@ class BackendMessage.NoticeResponse extends BackendMessage.ErrorResponse
 
 class BackendMessage.ReadyForQuery extends BackendMessage
   typeId: 90 # Z
-  
+
   read: (buffer) ->
     @transactionStatus = buffer.readUInt8(0)
 
-  
+
 ##############################################################
 # BackendMessage factory
 ############################################################## 
@@ -201,5 +201,6 @@ BackendMessage.fromBuffer = (buffer) ->
     message
   else
     throw new Error("Unkown message type: #{typeId}")
-  
+
+
 module.exports = BackendMessage

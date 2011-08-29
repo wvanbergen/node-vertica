@@ -26,5 +26,31 @@ vow.addBatch
       assert.deepEqual ValueDecoders.string.timestamp(data), new Date(Date.UTC(2011, 7, 29, 17, 34, 40, 547))
 
 
+    'date': ->
+      data = new Buffer([50, 48, 49, 49, 45, 48, 56, 45, 50, 57])
+      assert.deepEqual ValueDecoders.string.date(data), new Date(Date.UTC(2011, 7, 29))
+
+
+    'string': ->
+      data = new Buffer([104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100])
+      assert.deepEqual ValueDecoders.string.string(data), 'hello world'
+      
+    'integer': ->
+      data = new Buffer([49])
+      assert.deepEqual ValueDecoders.string.integer(data), 1
+      
+    'real': ->
+      data = new Buffer([49, 46, 51, 51])
+      assert.deepEqual ValueDecoders.string.real(data), 1.33
+    
+    'numeric': ->
+      data = new Buffer([49, 48, 46, 53])
+      assert.deepEqual ValueDecoders.string.real(data), 10.5
+
+    'boolean': ->
+      assert.deepEqual ValueDecoders.string.boolean(new Buffer([116])), true
+      assert.deepEqual ValueDecoders.string.boolean(new Buffer([102])), false
+
+
 vow.export(module)
       
