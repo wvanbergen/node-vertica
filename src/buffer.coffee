@@ -69,4 +69,14 @@ Buffer::readZeroTerminatedString ?= (offset, encoding) ->
   endIndex++ while endIndex < @length && @[endIndex] != 0x00
   return @toString('ascii', offset, endIndex)
 
+
+#######################################
+# Debugging
+#######################################
+
+# Buffer.debug ?= (buffer) ->
+#   bytes = ("#{byte}" for byte in buffer).join(", ")
+#   "Buffer([#{bytes}])"
+
+
 exports.Buffer = Buffer
