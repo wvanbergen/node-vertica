@@ -171,35 +171,60 @@ class FrontendMessage.Parse extends FrontendMessage
 
 class FrontendMessage.Bind extends FrontendMessage
   typeId: 66
-  
+
   constructor: (@portal, @preparedStatement, parameterValues) ->
     @parameterValues = []
     for parameterValue in parameterValues
       @parameterValues.push parameterValue.toString()
-  
+
   payload: ->
     b = new Buffer(8192)
     pos = 0
-    
+
     pos += b.writeZeroTerminatedString(@portal, pos)
     pos += b.writeZeroTerminatedString(@preparedStatement, pos)
     pos += b.writeUInt16(0x00, pos) # encode values using text
     pos += b.writeUInt16(@parameterValues.length, pos)
-    
+
     for value in @parameterValues
       pos += b.writeUInt32(value.length, pos)
       pos += b.write(value, pos)
-        
+
     return b.slice(0, pos)
+
 
 class FrontendMessage.Flush extends FrontendMessage
   typeId: 72
 
+
 class FrontendMessage.Sync extends FrontendMessage
   typeId: 83
 
+
 class FrontendMessage.Terminate extends FrontendMessage
   typeId: 88
+
+
+class FrontendMessage.CopyData extends FrontendMessage
+  typeId: 100
+  
+  constructor: (@data) ->
+    
+  payload: ->
+    new Buffer(@data)
+
+
+class FrontendMessage.CopyDone extends FrontendMessage
+  typeId: 99
+
+
+class FrontendMessage.CopyFail extends FrontendMessage
+  typeId: 102
+
+  constructor: (@error) ->
+    
+  payload: ->
+    @error
 
 
 module.exports = FrontendMessage

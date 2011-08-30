@@ -167,7 +167,8 @@ vow.addBatch
     "it should encode the message correctly": (topic) -> 
       reference = new Buffer([0, 0, 0, 8, 4, 210, 22, 47])
       assert.deepEqual topic.toBuffer(), reference
-  
+
+
   "Password message":
     topic: -> new FrontendMessage.Password('password')
     
@@ -181,7 +182,33 @@ vow.addBatch
       topic.options.user = 'user'
       reference = new Buffer([112, 0, 0, 0, 40, 109, 100, 53, 56, 101, 57, 57, 56, 97, 97, 97, 54, 54, 98, 100, 51, 48, 50, 101, 53, 53, 57, 50, 100, 102, 51, 54, 52, 50, 99, 49, 54, 102, 55, 56, 0])
       assert.deepEqual topic.toBuffer().toString(), reference.toString()
-    
+
+
+  "CopyDone message":
+    topic: -> new FrontendMessage.CopyDone()
+
+    "it should format the message correctly": (topic) ->
+      reference = new Buffer([99, 0, 0, 0, 4])
+      assert.deepEqual topic.toBuffer(), reference
+
+  "CopyFail message":
+    topic: -> new FrontendMessage.CopyFail('error')
+
+    "it should format the message correctly": (topic) ->
+      reference = Buffer([102, 0, 0, 0, 10, 101, 114, 114, 111, 114, 0])
+      assert.deepEqual topic.toBuffer(), reference
+
+  "CopyData message":
+    topic: -> new FrontendMessage.CopyData(new Buffer('123'))
+
+    "it should format the message correctly": (topic) ->
+      reference = new Buffer([100, 0, 0, 0, 7, 49, 50, 51])
+      assert.deepEqual topic.toBuffer(), reference
+
+    "it should work with both strings and buffers": (topic) ->
+      other = new FrontendMessage.CopyData('123')
+      assert.deepEqual topic.toBuffer(), other.toBuffer()
+
 
 vow.export(module)
 

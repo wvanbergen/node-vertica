@@ -96,8 +96,11 @@ class Connection extends EventEmitter
 
   _queryDirect: (sql, callback) ->
     @_executeJob(new Query(this, sql, callback))
-    
 
+  copy: (sql, source, callback) ->
+    q = new Query(this, sql, callback)
+    q.copyInSource = source
+    @_scheduleJob(q)
 
 
   _handshake: ->
@@ -205,6 +208,7 @@ class Connection extends EventEmitter
     
   _writeMessage: (msg, callback) ->
     @connection.write(msg.toBuffer(), null, callback)
+
 
 # Exports
 module.exports = Connection

@@ -113,4 +113,12 @@ vow.addBatch
       assert.equal message.message, 'command NOTIFY is not supported'
 
 
+  "CopyInResponse message":
+    "it should read a message correctly": ->
+      message = BackendMessage.fromBuffer(new Buffer([71, 0, 0, 0, 7, 0, 0, 0]))
+      assert.ok message instanceof BackendMessage.CopyInResponse
+      assert.equal message.globalFormatType, 0
+      assert.deepEqual message.fieldFormatTypes, []
+
+
 vow.export(module)

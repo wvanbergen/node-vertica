@@ -181,6 +181,20 @@ class BackendMessage.ReadyForQuery extends BackendMessage
   read: (buffer) ->
     @transactionStatus = buffer.readUInt8(0)
 
+class BackendMessage.CopyInResponse extends BackendMessage
+  typeId: 71 # G
+
+  read: (buffer) ->
+    @globalFormatType = buffer.readUInt8(0)
+    @fieldFormatTypes = []
+
+    numberOfFields = buffer.readUInt16(1)
+    pos = 3
+    for i in [0 ... numberOfFields]
+      @fieldFormatTypes.push buffer.readUInt8(pos)
+      pos += 1
+
+
 
 ##############################################################
 # BackendMessage factory
