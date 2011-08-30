@@ -1,5 +1,7 @@
 vows    = require 'vows'
 assert  = require 'assert'
+
+Vertica       = require('../src/vertica')
 ValueDecoders = require('../src/value_decoders')
 
 vow = vows.describe('Value Decoders')
@@ -22,9 +24,15 @@ vow.addBatch
 
 
     'timestamp without timezone': ->
+      # Use UTC by default
       data = new Buffer([50, 48, 49, 49, 45, 48, 56, 45, 50, 57, 32, 49, 55, 58, 51, 52, 58, 52, 48, 46, 53, 52, 54, 54, 48, 53])
       assert.deepEqual ValueDecoders.string.timestamp(data), new Date(Date.UTC(2011, 7, 29, 17, 34, 40, 547))
 
+      # Set timezone offset to +2
+      Vertica.setTimezoneOffset("+2")
+      data = new Buffer([50, 48, 49, 49, 45, 48, 56, 45, 50, 57, 32, 49, 55, 58, 51, 52, 58, 52, 48, 46, 53, 52, 54, 54, 48, 53])
+      assert.deepEqual ValueDecoders.string.timestamp(data), new Date(Date.UTC(2011, 7, 29, 15, 34, 40, 547))
+      Vertica.setTimezoneOffset(null)
 
     'date': ->
       data = new Buffer([50, 48, 49, 49, 45, 48, 56, 45, 50, 57])
