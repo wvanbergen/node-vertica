@@ -105,7 +105,7 @@ class Connection extends EventEmitter
 
   _handshake: ->
     authenticationFailureHandler = (err) =>
-      @connectedCallback(err.message) if @connectedCallback
+      if @connectedCallback then @connectedCallback(err.message) else @emit 'error', err
 
     authenticationHandler = (msg) =>
       switch msg.method 
@@ -170,7 +170,7 @@ class Connection extends EventEmitter
     @connectedCallback(null, this) if @connectedCallback
     
   _initializationFailure: (err) ->
-    if @connectedCallback then @connectedCallback(err) else throw err
+    if @connectedCallback then @connectedCallback(err) else @emit 'error', err
       
 
   _onData: (buffer) ->
