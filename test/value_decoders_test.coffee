@@ -36,7 +36,7 @@ vow.addBatch
 
     'date': ->
       data = new Buffer([50, 48, 49, 49, 45, 48, 56, 45, 50, 57])
-      assert.deepEqual ValueDecoders.string.date(data), new Date(Date.UTC(2011, 7, 29))
+      assert.deepEqual ValueDecoders.string.date(data), new Vertica.Date(2011, 8, 29)
 
 
     'string': ->

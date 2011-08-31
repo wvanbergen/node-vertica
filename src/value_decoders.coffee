@@ -1,12 +1,14 @@
 Vertica = require('./vertica')
 
 stringDecoders =
-  string:   (value) -> value.toString()
-  integer:  (value) -> +value
-  real:     (value) -> parseFloat(value)
-  numeric:  (value) -> parseFloat(value)
-  boolean:  (value) -> value.toString() == 't'
-
+  string:    (value) -> value.toString()
+  integer:   (value) -> +value
+  real:      (value) -> parseFloat(value)
+  numeric:   (value) -> parseFloat(value)
+  boolean:   (value) -> value.toString() == 't'
+  date:      (value) -> Vertica.Date.fromStringBuffer(value)
+  interval:  (value) -> Vertica.Interval.fromStringBuffer(value)
+  
   timestamp: (value) ->
     timestampRegexp = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})(\.\d{1,})?(?:([\+\-])(\d{2})(?:\:(\d{2}))?)?$/
     if matches = value.toString('ascii').match(timestampRegexp)
@@ -23,15 +25,6 @@ stringDecoders =
 
     else
       throw 'Invalid timestamp string returned'
-
-
-  date: (value) ->
-    dateRegexp = /^(\d{4})-(\d{2})-(\d{2})$/
-    if matches = value.toString('ascii').match(dateRegexp)
-      new Date(Date.UTC(+matches[1], +matches[2] - 1, +matches[3]))
-    else
-      throw 'Invalid date string returned'
-
 
   default: (value) -> value.toString()
 
