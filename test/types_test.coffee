@@ -37,6 +37,11 @@ vow.addBatch
       d = new Vertica.Date(2010, 8, 30)
       assert.equal d.sqlQuoted(), "DATE('2010-08-30')"
 
+    "it should encode to JSON properly": ->
+      d = new Vertica.Date(2010, 8, 30)
+      assert.deepEqual d.toJSON(), '2010-08-30'
+
+
   "Vertica.Interval":
     "it construct one based on a string buffer with only days": ->
       i = Vertica.Interval.fromStringBuffer(new Buffer([55, 51, 48]))
@@ -87,5 +92,8 @@ vow.addBatch
       assert.equal i.inMilliseconds(), 183845006.007
       assert.equal i.inMicroseconds(), 183845006007
 
+    "it should encode to JSON properly": ->
+      i = new Vertica.Interval(2, 3, 4, 5.006007)
+      assert.deepEqual i.toJSON(), days: 2, hours: 3, minutes: 4, seconds: 5.006007
 
 vow.export(module)

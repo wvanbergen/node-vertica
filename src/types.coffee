@@ -14,6 +14,8 @@ class VerticaDate
   toDate:    -> new Date(@year, @month - 1, @day)
   toString:  -> "#{padWithZeroes(@year, 4)}-#{padWithZeroes(@month, 2)}-#{padWithZeroes(@day, 2)}"
   sqlQuoted: -> "DATE('#{@toString()}')"
+  toJSON:    -> @toString()
+
   
 VerticaDate.fromStringBuffer = (buffer) ->
   if matches = buffer.toString('ascii').match(/^(\d{4})-(\d{2})-(\d{2})$/)
@@ -53,6 +55,9 @@ class VerticaInterval
 
   inMicroseconds: ->
     @inSeconds() * 1000000
+
+  toJSON: ->
+    days: @days, hours: @hours, minutes: @minutes, seconds: @seconds
 
 
 VerticaInterval.fromStringBuffer = (buffer) ->
