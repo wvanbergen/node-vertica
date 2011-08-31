@@ -13,18 +13,18 @@ class Connection extends EventEmitter
     @connectionOptions.host   ?= 'localhost'
     @connectionOptions.port   ?= 5433
     @connectionOptions.ssl    ?= 'optional'
-  
+
     @connected = false
     @busy      = true
     @queue     = []
-    
+
     @parameters = {}
     @key = null
     @pid = null
     @transactionStatus = null
-    
+
     @incomingData = new Buffer(0)
-  
+
   connect: (callback) ->
     @connectedCallback = callback
     @connection = net.createConnection @connectionOptions.port, @connectionOptions.host
