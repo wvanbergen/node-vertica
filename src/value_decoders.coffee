@@ -7,12 +7,13 @@ stringDecoders =
   numeric:   (value) -> parseFloat(value)
   boolean:   (value) -> value.toString() == 't'
   date:      (value) -> Vertica.Date.fromStringBuffer(value)
+  time:      (value) -> Vertica.Time.fromStringBuffer(value)
   interval:  (value) -> Vertica.Interval.fromStringBuffer(value)
   
   timestamp: (value) ->
     timestampRegexp = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})(\.\d{1,})?(?:([\+\-])(\d{2})(?:\:(\d{2}))?)?$/
     if matches = value.toString('ascii').match(timestampRegexp)
-      utc = Date.UTC(+matches[1], +matches[2] - 1, +matches[3], +matches[4], +matches[5], +matches[6], Math.round(+matches[7] * 1000))
+      utc = Date.UTC(+matches[1], +matches[2] - 1, +matches[3], +matches[4], +matches[5], +matches[6], Math.round(+matches[7] * 1000) || 0)
 
       if matches[8]
         timezoneOffset = +matches[9] * 60 + (+matches[10] || 0)

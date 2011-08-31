@@ -20,7 +20,8 @@ types   = require('./types')
 quoting = require('./quoting')
 
 exports.Date            = types.Date
-exports.Timestamp       = types.Timestamp
+exports.Time            = types.Time
+# exports.Timestamp       = types.Timestamp
 exports.Interval        = types.Interval
 
 exports.escape          = quoting.escape

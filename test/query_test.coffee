@@ -46,7 +46,34 @@ else
       "it should return SELECT as status": (err, fields, rows, status) ->
         assert.equal status, "SELECT"
 
-    "Dealing with dates, intervals and timestamps"
+      "results should be JSON.stringifyp-able": (err, fields, rows, status) ->
+        assert.doesNotThrow -> JSON.stringify(err)
+        assert.doesNotThrow -> JSON.stringify(fields)
+        assert.doesNotThrow -> JSON.stringify(rows)
+        assert.doesNotThrow -> JSON.stringify(status)
 
+    "Dealing with dates and times":
+      topic: -> query("SELECT '2010-01-01'::date, '2010-01-01 12:30:00'::timestamp, '30 DAY'::interval, '04:05:06'::time", @callback)
+      
+      "it should not have an error message": (err, _) ->
+        assert.equal err, null
+        
+      "it should return fields": (err, fields, rows, status) ->
+        assert.length fields, 4
+        assert.equal fields[0].type, "date"
+        assert.equal fields[1].type, "timestamp"
+        assert.equal fields[2].type, "interval"
+        assert.equal fields[3].type, "time"
+        
+      "it should return rows": (err, fields, rows, status) ->
+        assert.length rows, 1
+        assert.deepEqual rows[0], [new Vertica.Date(2010,1,1), new Date(Date.UTC(2010, 0, 1, 12, 30, 0)), new Vertica.Interval(30), new Vertica.Time(4,5,6)]
+      
+      "results should be JSON.stringifyp-able": (err, fields, rows, status) ->
+        assert.doesNotThrow -> JSON.stringify(err)
+        assert.doesNotThrow -> JSON.stringify(fields)
+        assert.doesNotThrow -> JSON.stringify(rows)
+        assert.doesNotThrow -> JSON.stringify(status)
+    
 
   vow.export(module)

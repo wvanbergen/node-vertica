@@ -13,7 +13,7 @@ class VerticaDate
     
   toDate:    -> new Date(@year, @month - 1, @day)
   toString:  -> "#{padWithZeroes(@year, 4)}-#{padWithZeroes(@month, 2)}-#{padWithZeroes(@day, 2)}"
-  sqlQuoted: -> "DATE('#{@toString()}')"
+  sqlQuoted: -> "'#{@toString()}'::date"
   toJSON:    -> @toString()
 
   
@@ -25,6 +25,23 @@ VerticaDate.fromStringBuffer = (buffer) ->
 
 VerticaDate.fromDate = (date) ->
   new VerticaDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
+
+
+class VerticaTime
+  constructor: (hour, minute, second) ->
+    @hour   = +hour
+    @minute = +minute
+    @second = +second
+
+  toString:  -> "#{padWithZeroes(@hour, 2)}:#{padWithZeroes(@minute, 2)}:#{padWithZeroes(@second, 2)}"
+  sqlQuoted: -> "'#{@toString()}'::time"
+  toJSON:    -> @toString()
+
+VerticaTime.fromStringBuffer = (buffer) ->
+  if matches = buffer.toString('ascii').match(/^(\d{2}):(\d{2}):(\d{2})$/)
+    new VerticaTime(matches[1], matches[2], matches[3])
+  else
+    throw 'Invalid time format!'
 
 
 # class VerticaTimestamp
@@ -58,6 +75,9 @@ class VerticaInterval
 
   toJSON: ->
     days: @days, hours: @hours, minutes: @minutes, seconds: @seconds
+  
+  sqlQuoted: ->
+    throw 'Not yet implemented'
 
 
 VerticaInterval.fromStringBuffer = (buffer) ->
@@ -69,4 +89,5 @@ VerticaInterval.fromStringBuffer = (buffer) ->
 
 
 exports.Date = VerticaDate
+exports.Time = VerticaTime
 exports.Interval = VerticaInterval

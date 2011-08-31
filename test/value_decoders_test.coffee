@@ -38,6 +38,10 @@ vow.addBatch
       data = new Buffer([50, 48, 49, 49, 45, 48, 56, 45, 50, 57])
       assert.deepEqual ValueDecoders.string.date(data), new Vertica.Date(2011, 8, 29)
 
+    'time': ->
+      data = new Buffer([48, 52, 58, 48, 53, 58, 48, 54])
+      assert.deepEqual ValueDecoders.string.time(data), new Vertica.Time(4,5,6)
+
 
     'string': ->
       data = new Buffer([104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100])

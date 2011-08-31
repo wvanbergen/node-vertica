@@ -33,13 +33,33 @@ vow.addBatch
       d = new Vertica.Date(2010, 8, 30)
       assert.equal d.toString(), '2010-08-30'
     
-    "it should be properly quoted voor Vertica": ->
+    "it should be properly quoted for Vertica": ->
       d = new Vertica.Date(2010, 8, 30)
-      assert.equal d.sqlQuoted(), "DATE('2010-08-30')"
+      assert.equal d.sqlQuoted(), "'2010-08-30'::date"
 
     "it should encode to JSON properly": ->
       d = new Vertica.Date(2010, 8, 30)
       assert.deepEqual d.toJSON(), '2010-08-30'
+
+
+  "Vertica.Time":
+    "it should construct one based on a string buffer": ->
+      t = Vertica.Time.fromStringBuffer(new Buffer([48, 52, 58, 48, 53, 58, 48, 54]))
+      assert.equal t.hour, 4
+      assert.equal t.minute, 5
+      assert.equal t.second, 6
+      
+    "it should encode to JSON properly": ->
+      d = new Vertica.Time(4,5,6)
+      assert.deepEqual d.toJSON(), '04:05:06'
+      
+    "it should convert to string properly": ->
+      d = new Vertica.Time(4,5,6)
+      assert.deepEqual "#{d}", '04:05:06'
+
+    "it should be properly quoted for Vertica": ->
+      d = new Vertica.Time(4, 5, 6)
+      assert.equal d.sqlQuoted(), "'04:05:06'::time"
 
 
   "Vertica.Interval":

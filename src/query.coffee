@@ -135,5 +135,9 @@ class Query.Field
     
     @convert = ValueDecorders[@formatCode][@type] || ValueDecorders[@formatCode].default
 
+  toJSON: () ->
+    name: @name, tableId: @tableId, tableFieldIndex: @tableFieldIndex, typeId: @typeId,
+    type: @type, size: @size, modifier: @modifier, formatCode: @formatCode
+
 
 module.exports = Query
