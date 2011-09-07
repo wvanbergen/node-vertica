@@ -30,7 +30,7 @@ class Query extends EventEmitter
     
     @fields = []
     for column in msg.columns
-      field = new Query.Field(this, column)
+      field = new Query.Field(column)
       @emit 'field', field
       @fields.push field
 
@@ -123,7 +123,7 @@ class Query extends EventEmitter
     @connection.removeListener 'CopyInResponse',     @onCopyInResponseListener
 
 class Query.Field
-  constructor: (@query, msg) ->
+  constructor: (msg) ->
     @name            = msg.name
     @tableId         = msg.tableId
     @tableFieldIndex = msg.tableFieldIndex
