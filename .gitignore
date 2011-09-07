@@ -2,3 +2,4 @@
 .DS_Store
 /lib/
 /test/connection.json
+dev.coffee
