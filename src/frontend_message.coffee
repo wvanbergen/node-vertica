@@ -52,7 +52,7 @@ class FrontendMessage.Startup extends FrontendMessage
       pos += pl.writeZeroTerminatedString('options', pos)
       pos += pl.writeZeroTerminatedString(@options,  pos)
 
-    pos += pl.writeUInt8(0, pos) # FIXME: 0 or '0' ??
+    pos += pl.writeUInt8(0, pos)
     return pl.slice(0, pos)
     
     
