@@ -104,9 +104,10 @@ class FrontendMessage.Close extends FrontendMessage
   typeId: 67
 
   constructor: (type, @name) ->
+    @name ?= ""
     @type = switch type
-      when 'portal', 'P', 80 then 80
-      when 'prepared_statement', 'prepared', 'statement', 'S', 83 then 83
+      when 'portal', 'p', 'P', 80 then 80
+      when 'prepared_statement', 'prepared', 'statement', 's', 'S', 83 then 83
       else throw new Error("#{type} not a valid type to describe")
 
   payload: ->
@@ -120,6 +121,7 @@ class FrontendMessage.Describe extends FrontendMessage
   typeId: 68
 
   constructor: (type, @name) ->
+    @name ?= ""
     @type = switch type
       when 'portal', 'P', 80 then 80
       when 'prepared_statement', 'prepared', 'statement', 'S', 83 then 83
@@ -136,7 +138,10 @@ class FrontendMessage.Execute extends FrontendMessage
   typeId: 69
 
   constructor: (@portal, @maxRows) ->
-
+    @portal  ?= ""
+    @maxRows ?= 0
+    
+    
   payload: ->
     b = new Buffer(5 + @portal.length)
     pos = b.writeZeroTerminatedString(@portal)
@@ -156,6 +161,8 @@ class FrontendMessage.Parse extends FrontendMessage
   typeId: 80
     
   constructor: (@name, @sql, @parameterTypes) ->
+    @name ?= ""
+    @parameterTypes ?= []
 
   payload: ->
     b = new Buffer(8192)

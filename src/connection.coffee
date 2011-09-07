@@ -74,21 +74,21 @@ class Connection extends EventEmitter
       @queue.push job
       @emit 'queuejob', job
     else
-      @_executeJob(job)
+      @_runJob(job)
       
     return job
   
-  _executeJob: (job) ->
+  _runJob: (job) ->
     throw "Connection is closed" unless @connected
     throw "Connection is busy" if @busy
 
     @busy = true
-    job.execute()
+    job.run()
     return job
 
   _processJobQueue: () ->
     if @queue.length > 0
-      @_executeJob(@queue.shift())
+      @_runJob(@queue.shift())
     else
       @emit 'ready', this
     
@@ -96,7 +96,7 @@ class Connection extends EventEmitter
     @_scheduleJob(new Query(this, sql, callback))
 
   _queryDirect: (sql, callback) ->
-    @_executeJob(new Query(this, sql, callback))
+    @_runJob(new Query(this, sql, callback))
 
   copy: (sql, source, callback) ->
     q = new Query(this, sql, callback)
@@ -129,10 +129,13 @@ class Connection extends EventEmitter
     @once 'Authentication', authenticationHandler
     @on   'ParameterStatus', (msg) => @parameters[msg.name] = msg.value
     @on   'BackendKeyData',  (msg) => [@pid, @key] = [msg.pid, msg.key]
+
     @on   'ReadyForQuery', (msg) => 
       @busy = false
       @transactionStatus = msg.transactionStatus
 
+    @on 'ErrorResponse', (msg) =>
+      @busy = false
 
   _initializeConnection: () ->
     initializers = []

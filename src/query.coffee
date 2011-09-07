@@ -1,6 +1,6 @@
 EventEmitter    = require('events').EventEmitter
 FrontendMessage = require('./frontend_message')
-valueDecoders   = require('./types').decoders
+decoders        = require('./types').decoders
 
 class Query extends EventEmitter
   
@@ -8,7 +8,7 @@ class Query extends EventEmitter
     @_handlingCopyIn = false
 
 
-  execute: () ->
+  run: () ->
     @emit 'start'
 
     @connection._writeMessage(new FrontendMessage.Query(@sql))
@@ -26,7 +26,7 @@ class Query extends EventEmitter
     @callback("The query was empty!") if @callback
   
   onRowDescription: (msg) ->
-    throw "Cannot handle muti-queries with a callback!" if @callback? && @status?
+    throw "Cannot handle multi-queries with a callback!" if @callback? && @status?
     
     @fields = []
     for column in msg.columns
@@ -40,7 +40,7 @@ class Query extends EventEmitter
   onDataRow: (msg) ->
     row = []
     for value, index in msg.values
-      row.push if value? then @fields[index].convert(value) else null
+      row.push if value? then @fields[index].decoder(value) else null
     
     @rows.push row if @callback
     @emit 'row', row
@@ -55,8 +55,8 @@ class Query extends EventEmitter
 
   onErrorResponse: (msg) ->
     @_removeAllListeners()
-    @emit 'error', msg unless @callback
-    @callback(msg.message) if @callback
+    @emit 'error', msg.message unless @callback
+    @callback(msg) if @callback
 
   onCopyInResponse: (msg) ->
     @_handlingCopyIn = true
@@ -127,13 +127,13 @@ class Query.Field
     @name            = msg.name
     @tableId         = msg.tableId
     @tableFieldIndex = msg.tableFieldIndex
-    @typeId          = msg.typeId
+    @typeOID         = msg.typeOID
     @type            = msg.type
     @size            = msg.size
     @modifier        = msg.modifier
     @formatCode      = msg.formatCode
 
-    @convert = valueDecoders[@formatCode][@type] || valueDecoders[@formatCode].default
+    @decoder = decoders[@formatCode][@type] || decoders[@formatCode].default
 
 
 module.exports = Query

@@ -117,13 +117,17 @@ class BackendMessage.CommandComplete extends BackendMessage
     @status = buffer.readZeroTerminatedString()
 
 
+class BackendMessage.CloseComplete extends BackendMessage
+  typeId: 51 # 3
+
+
 class BackendMessage.ParameterDescription extends BackendMessage
   typeId: 116 # t
 
   read: (buffer) ->
     count = buffer.readUInt16(0)
-    @types = (buffer.readUInt32(2 + i * 4) for i in [0 ... count])
-      
+    @parameterTypes = (buffer.readUInt32(2 + i * 4) for i in [0 ... count])
+
 
 class BackendMessage.ParseComplete extends BackendMessage
   typeId: 49 # 1
