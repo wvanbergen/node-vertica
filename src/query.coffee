@@ -132,12 +132,8 @@ class Query.Field
     @size            = msg.size
     @modifier        = msg.modifier
     @formatCode      = msg.formatCode
-    
-    @convert = ValueDecorders[@formatCode][@type] || ValueDecorders[@formatCode].default
 
-  toJSON: () ->
-    name: @name, tableId: @tableId, tableFieldIndex: @tableFieldIndex, typeId: @typeId,
-    type: @type, size: @size, modifier: @modifier, formatCode: @formatCode
+    @convert = ValueDecorders[@formatCode][@type] || ValueDecorders[@formatCode].default
 
 
 module.exports = Query
