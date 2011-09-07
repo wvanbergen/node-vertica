@@ -38,6 +38,7 @@ vow.addBatch
       data = new Buffer([50, 48, 49, 49, 45, 48, 56, 45, 50, 57])
       assert.deepEqual decoders.string.date(data), new types.Date(2011, 8, 29)
 
+
     'time': ->
       data = new Buffer([48, 52, 58, 48, 53, 58, 48, 54])
       assert.deepEqual decoders.string.time(data), new types.Time(4,5,6)
@@ -46,18 +47,22 @@ vow.addBatch
     'string': ->
       data = new Buffer([104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100])
       assert.deepEqual decoders.string.string(data), 'hello world'
-      
+
+
     'integer': ->
       data = new Buffer([49])
       assert.deepEqual decoders.string.integer(data), 1
-      
+
+
     'real': ->
       data = new Buffer([49, 46, 51, 51])
       assert.deepEqual decoders.string.real(data), 1.33
-    
+
+
     'numeric': ->
       data = new Buffer([49, 48, 46, 53])
       assert.deepEqual decoders.string.real(data), 10.5
+
 
     'boolean': ->
       assert.deepEqual decoders.string.boolean(new Buffer([116])), true
