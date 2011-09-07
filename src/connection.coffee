@@ -66,6 +66,7 @@ class Connection extends EventEmitter
     @connection.on 'timeout', @_onTimeout.bind(this)
 
   disconnect: ->
+    @_writeMessage(new FrontendMessage.Terminate())
     @connection.end()
 
   _scheduleJob: (job) ->
