@@ -183,15 +183,16 @@ class Connection extends EventEmitter
       @incomingData.copy(bufferedData)
       buffer.copy(bufferedData, @incomingData.length)
       @incomingData = bufferedData
-    
+
     size = @incomingData.readUInt32(1) # start at 1 to skip the message ID
     while @incomingData.length >= 5 && size + 1 <= @incomingData.length
 
       # parse message
       message = BackendMessage.fromBuffer(@incomingData.slice(0, size + 1))
+      console.log '<=', message.event, message if @debug
       @emit 'message', message
       @emit message.event, message
-      
+
       # update loop variables
       @incomingData = @incomingData.slice(size + 1)
       size = @incomingData.readUInt32(1)
@@ -208,6 +209,7 @@ class Connection extends EventEmitter
     @emit 'error', exception
     
   _writeMessage: (msg, callback) ->
+    console.log '=>', msg.__proto__.constructor.name, msg if @debug
     @connection.write(msg.toBuffer(), null, callback)
 
 
