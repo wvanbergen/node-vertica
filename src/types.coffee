@@ -181,12 +181,29 @@ stringDecoders =
   timestamp: (buffer) -> VerticaTimestamp.fromStringBuffer(buffer)
   default:   (buffer) -> buffer.toString()
 
-binaryDecoders = 
+binaryDecoders =
   default: (buffer) -> throw 'Binary decoders not yet supported!'
 
-
 exports.decoders =
-  0:        stringDecoders, 
-  1:        binaryDecoders, 
-  'string': stringDecoders, 
+  0:        stringDecoders,
+  1:        binaryDecoders,
+  'string': stringDecoders,
   'binary': binaryDecoders
+
+################################################
+# value encoders
+################################################
+
+stringEncoders =
+  string:    (value) -> value.toString()
+  boolean:   (value) -> if value then 't' else 'f'
+  default:   (value) -> value.toString()
+
+binaryEncoders =
+  default: (buffer) -> throw 'Binary decoders not yet supported!'
+
+exports.encoders =
+  0:        stringEncoders,
+  1:        binaryEncoders,
+  'string': stringEncoders,
+  'binary': binaryEncoders
