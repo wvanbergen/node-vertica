@@ -51,7 +51,7 @@ vow.addBatch
       assert.length message.columns, 1
       assert.equal  message.columns[0].tableId, 30110
       assert.equal  message.columns[0].tableFieldIndex, 1
-      assert.equal  message.columns[0].typeId, 6
+      assert.equal  message.columns[0].typeOID, 6
       assert.equal  message.columns[0].type, "integer"
 
 

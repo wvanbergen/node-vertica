@@ -1,4 +1,5 @@
-AuthenticationMethods  = require('./authentication').methods
+AuthenticationMethods = require('./authentication').methods
+typeOIDs = require('./types').typeOIDs
 
 class BackendMessage
   typeId: null
@@ -53,29 +54,6 @@ class BackendMessage.EmptyQueryResponse extends BackendMessage
 class BackendMessage.RowDescription extends BackendMessage
   typeId: 84 # T
   
-  fieldTypes:
-    5:    "boolean"
-    6:    "integer"
-    7:    "real"
-    8:    "string"
-    9:    "string"
-    10:   "date"
-    11:   "time"
-    12:   "timestamp"
-    13:   "timestamp"
-    14:   "interval"
-    15:   "time"
-    16:   "numeric"
-    25:   "string"
-    1043: "string"
-    20:   "integer"
-    21:   "integer"
-    23:   "integer"
-    26:   "integer"
-    700:  "integer"
-    701:  "integer"
-    1700: "real"
-
   read: (buffer) ->
     numberOfFields = buffer.readUInt16(0)
     pos = 2
@@ -88,7 +66,7 @@ class BackendMessage.RowDescription extends BackendMessage
       pos += 4
       tableFieldIndex = buffer.readUInt16(pos)
       pos += 2
-      typeId = buffer.readUInt32(pos)
+      typeOID = buffer.readUInt32(pos)
       pos += 4
       size = buffer.readUInt16(pos)
       pos += 2
@@ -102,12 +80,12 @@ class BackendMessage.RowDescription extends BackendMessage
         name: name
         tableId: tableId
         tableFieldIndex: tableFieldIndex
-        typeId: typeId
-        type: @fieldTypes[typeId]
+        typeOID: typeOID
+        type: typeOIDs[typeOID]
         size: size
         modifier: modifier
         formatCode: formatCode
-    
+
       @columns.push fieldDescriptor
 
 
@@ -137,6 +115,18 @@ class BackendMessage.CommandComplete extends BackendMessage
   
   read: (buffer) ->
     @status = buffer.readZeroTerminatedString()
+
+
+class BackendMessage.ParameterDescription extends BackendMessage
+  typeId: 116 # t
+
+  read: (buffer) ->
+    count = buffer.readUInt16(0)
+    @types = (buffer.readUInt32(2 + i * 4) for i in [0 ... count])
+      
+
+class BackendMessage.ParseComplete extends BackendMessage
+  typeId: 49 # 1
 
 
 class BackendMessage.ErrorResponse extends BackendMessage
@@ -193,7 +183,6 @@ class BackendMessage.CopyInResponse extends BackendMessage
     for i in [0 ... numberOfFields]
       @fieldFormatTypes.push buffer.readUInt8(pos)
       pos += 1
-
 
 
 ##############################################################

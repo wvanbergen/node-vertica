@@ -1,13 +1,13 @@
 EventEmitter    = require('events').EventEmitter
 FrontendMessage = require('./frontend_message')
-ValueDecorders  = require('./value_decoders')
+valueDecoders   = require('./types').decoders
 
 class Query extends EventEmitter
   
   constructor: (@connection, @sql, @callback) ->
     @_handlingCopyIn = false
 
-    
+
   execute: () ->
     @emit 'start'
 
@@ -133,7 +133,7 @@ class Query.Field
     @modifier        = msg.modifier
     @formatCode      = msg.formatCode
 
-    @convert = ValueDecorders[@formatCode][@type] || ValueDecorders[@formatCode].default
+    @convert = valueDecoders[@formatCode][@type] || valueDecoders[@formatCode].default
 
 
 module.exports = Query
