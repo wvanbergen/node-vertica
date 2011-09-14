@@ -125,7 +125,7 @@ class Query extends EventEmitter
 class Query.Field
   constructor: (msg) ->
     @name            = msg.name
-    @tableId         = msg.tableId
+    @tableOID        = msg.tableOID
     @tableFieldIndex = msg.tableFieldIndex
     @typeOID         = msg.typeOID
     @type            = msg.type

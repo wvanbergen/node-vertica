@@ -62,7 +62,7 @@ class BackendMessage.RowDescription extends BackendMessage
     for i in [0 ... numberOfFields]
       name = buffer.readZeroTerminatedString(pos)
       pos += Buffer.byteLength(name) + 1
-      tableId = buffer.readUInt32(pos)
+      tableOID = buffer.readUInt32(pos)
       pos += 4
       tableFieldIndex = buffer.readUInt16(pos)
       pos += 2
@@ -78,7 +78,7 @@ class BackendMessage.RowDescription extends BackendMessage
 
       fieldDescriptor = 
         name: name
-        tableId: tableId
+        tableOID: tableOID
         tableFieldIndex: tableFieldIndex
         typeOID: typeOID
         type: typeOIDs[typeOID]
