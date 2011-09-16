@@ -5,6 +5,7 @@ exports.connect = (connectionOptions, callback) ->
   connection.connect(callback)
   return connection
 
+exports.Resultset = require('./resultset')
 
 types   = require('./types')
 

@@ -1,6 +1,7 @@
 EventEmitter    = require('events').EventEmitter
 FrontendMessage = require('./frontend_message')
 decoders        = require('./types').decoders
+Resultset       = require('./resultset')
 
 class Query extends EventEmitter
   
@@ -46,7 +47,7 @@ class Query extends EventEmitter
     @emit 'row', row
     
   onReadyForQuery: (msg) ->
-    @callback(null, fields: @fields, rows: @rows, status: @status) if @callback
+    @callback(null, new Resultset(fields: @fields, rows: @rows, status: @status)) if @callback
     @_removeAllListeners()
 
   onCommandComplete: (msg) ->

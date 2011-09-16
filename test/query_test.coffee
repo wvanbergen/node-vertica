@@ -54,10 +54,13 @@ else
 
     "Dealing with dates and times":
       topic: -> query("SELECT '2010-01-01'::date, '2010-01-01 12:30:00'::timestamp, '30 DAY'::interval, '04:05:06'::time", @callback)
-      
+
       "it should not have an error message": (err, _) ->
         assert.equal err, null
-        
+
+      "it should return a resultset instance": (err, resultset) ->
+        assert.ok resultset instanceof Vertica.Resultset
+
       "it should return fields": (err, resultset) ->
         assert.length resultset.fields, 4
         assert.equal resultset.fields[0].type, "date"
