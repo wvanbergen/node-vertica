@@ -30,21 +30,21 @@ else
       "it should not have an error message": (err, _) ->
         assert.equal err, null
       
-      "it should return fields": (err, fields, rows, status) ->
-        assert.length fields, 6
-        assert.equal fields[0].name, "field"
-        assert.equal fields[1].type, "integer"
-        assert.equal fields[2].type, "numeric"
-        assert.equal fields[3].type, "string"
-        assert.equal fields[4].type, "boolean"
-        assert.equal fields[5].type, "boolean"
+      "it should return fields": (err, resultset) ->
+        assert.length resultset.fields, 6
+        assert.equal resultset.fields[0].name, "field"
+        assert.equal resultset.fields[1].type, "integer"
+        assert.equal resultset.fields[2].type, "numeric"
+        assert.equal resultset.fields[3].type, "string"
+        assert.equal resultset.fields[4].type, "boolean"
+        assert.equal resultset.fields[5].type, "boolean"
 
-      "it should return rows": (err, fields, rows, status) ->
-        assert.length rows, 1
-        assert.deepEqual rows[0], [null, 1, 1.1, 'String', true, false]
+      "it should return rows": (err, resultset) ->
+        assert.length resultset.rows, 1
+        assert.deepEqual resultset.rows[0], [null, 1, 1.1, 'String', true, false]
 
-      "it should return SELECT as status": (err, fields, rows, status) ->
-        assert.equal status, "SELECT"
+      "it should return SELECT as status": (err, resultset) ->
+        assert.equal resultset.status, "SELECT"
 
       "results should be JSON.stringifyp-able": (err, fields, rows, status) ->
         assert.doesNotThrow -> JSON.stringify(err)
@@ -58,22 +58,20 @@ else
       "it should not have an error message": (err, _) ->
         assert.equal err, null
         
-      "it should return fields": (err, fields, rows, status) ->
-        assert.length fields, 4
-        assert.equal fields[0].type, "date"
-        assert.equal fields[1].type, "timestamp"
-        assert.equal fields[2].type, "interval"
-        assert.equal fields[3].type, "time"
+      "it should return fields": (err, resultset) ->
+        assert.length resultset.fields, 4
+        assert.equal resultset.fields[0].type, "date"
+        assert.equal resultset.fields[1].type, "timestamp"
+        assert.equal resultset.fields[2].type, "interval"
+        assert.equal resultset.fields[3].type, "time"
         
-      "it should return rows": (err, fields, rows, status) ->
-        assert.length rows, 1
-        assert.deepEqual rows[0], [new Vertica.Date(2010,1,1), new Date(Date.UTC(2010, 0, 1, 12, 30, 0)), new Vertica.Interval(30), new Vertica.Time(4,5,6)]
+      "it should return rows": (err, resultset) ->
+        assert.length resultset.rows, 1
+        assert.deepEqual resultset.rows[0], [new Vertica.Date(2010,1,1), new Date(Date.UTC(2010, 0, 1, 12, 30, 0)), new Vertica.Interval(30), new Vertica.Time(4,5,6)]
       
-      "results should be JSON.stringifyp-able": (err, fields, rows, status) ->
+      "results should be JSON.stringifyp-able": (err, resultset) ->
         assert.doesNotThrow -> JSON.stringify(err)
-        assert.doesNotThrow -> JSON.stringify(fields)
-        assert.doesNotThrow -> JSON.stringify(rows)
-        assert.doesNotThrow -> JSON.stringify(status)
+        assert.doesNotThrow -> JSON.stringify(resultset)
     
 
   vow.export(module)

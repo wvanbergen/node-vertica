@@ -46,7 +46,7 @@ class Query extends EventEmitter
     @emit 'row', row
     
   onReadyForQuery: (msg) ->
-    @callback(null, @fields, @rows, @status) if @callback
+    @callback(null, fields: @fields, rows: @rows, status: @status) if @callback
     @_removeAllListeners()
 
   onCommandComplete: (msg) ->

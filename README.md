@@ -27,7 +27,7 @@ connection = Vertica.connect user: "username", password: 'password', database: "
     console.log("Finished!", status)
 
   # buffered
-  connection.query "SELECT * FROM table", (err, fields, rows, status) ->
-    console.log err, fields, rows, status
+  connection.query "SELECT * FROM table", (err, resultset) ->
+    console.log err, resultset.fields, resultset.rows, resultset.status
 
 ```
