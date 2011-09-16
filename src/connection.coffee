@@ -37,12 +37,8 @@ class Connection extends EventEmitter
         @_writeMessage(new FrontendMessage.SSLRequest)
         @connection.once 'data', (buffer) =>
           if 'S' == buffer.toString('utf-8')
-            tls      = require 'tls'
-            starttls = require './starttls'
-            
-            sslOptions = key: @connectionOptions.key, cert: @connectionOptions.cert, ca: @connectionOptions.ca
-            
-            conn = starttls @connection, sslOptions, =>
+            sslOptions = key: @connectionOptions.sslKey, cert: @connectionOptions.sslCert, ca: @connectionOptions.sslCA
+            conn = require('./starttls') @connection, sslOptions, =>
               if !conn.authorized && @connectionOptions.ssl == 'verified'
                 conn.end()
                 @disconnect()
