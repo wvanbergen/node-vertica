@@ -54,7 +54,7 @@ VerticaDate.fromDate = (date) ->
   new VerticaDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
 
 
-exports.Date     = VerticaDate
+exports.Date = VerticaDate
 
 ################################################
 # Vertica Time type
@@ -76,7 +76,7 @@ VerticaTime.fromStringBuffer = (buffer) ->
   else
     throw 'Invalid time format!'
 
-exports.Time     = VerticaTime
+exports.Time = VerticaTime
 
 ################################################
 # Vertica Timestamp type
@@ -200,7 +200,7 @@ stringEncoders =
   default:   (value) -> value.toString()
 
 binaryEncoders =
-  default: (buffer) -> throw 'Binary decoders not yet supported!'
+  default: (buffer) -> throw 'Binary encoders not yet supported!'
 
 exports.encoders =
   0:        stringEncoders,
