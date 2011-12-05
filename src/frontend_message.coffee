@@ -21,9 +21,12 @@ class FrontendMessage
     headerLength = if @typeId? then 5 else 4
     pos = 0
     messageBuffer = new Buffer(headerLength + payloadBuffer.length)
-
-    pos += messageBuffer.writeUInt8(@typeId, pos) if @typeId
-    pos += messageBuffer.writeUInt32(payloadBuffer.length + 4, pos)
+    
+    if @typeId
+      messageBuffer.writeUInt8(@typeId, pos)
+      pos += 1
+    messageBuffer.writeUInt32(payloadBuffer.length + 4, pos)
+    pos += 4
     payloadBuffer.copy(messageBuffer, pos)
     
     return messageBuffer
@@ -51,8 +54,9 @@ class FrontendMessage.Startup extends FrontendMessage
     if @options
       pos += pl.writeZeroTerminatedString('options', pos)
       pos += pl.writeZeroTerminatedString(@options,  pos)
-
-    pos += pl.writeUInt8(0, pos) # FIXME: 0 or '0' ??
+    
+    pl.writeUInt8(0, pos)
+    pos += 1
     return pl.slice(0, pos)
     
     

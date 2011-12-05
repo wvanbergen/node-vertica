@@ -32,8 +32,9 @@ Buffer::_writeUInt ?= (bytes, number, offset, endian) ->
 
 Buffer::writeZeroTerminatedString ?= (str, offset, encoding) ->
   offset ?= 0
-  written  = @write(str, offset, encoding)
-  written += @writeUInt8(0, offset + written)
+  written  = @write(str, offset, null, encoding)
+  @writeUInt8(0, offset + written)
+  written += 1
   return written
   
 #######################################
