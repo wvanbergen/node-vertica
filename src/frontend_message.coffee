@@ -15,19 +15,20 @@ class FrontendMessage
     payloadBuffer = @payload()
     if typeof payloadBuffer == 'string'
       b = new Buffer(payloadBuffer.length + 1)
-      b.writeZeroTerminatedString(payloadBuffer)
+      b.writeZeroTerminatedString(payloadBuffer, 0)
       payloadBuffer = b
 
-    headerLength = if @typeId? then 5 else 4
-    pos = 0
+    headerLength  = if @typeId? then 5 else 4
     messageBuffer = new Buffer(headerLength + payloadBuffer.length)
     
     if @typeId
-      messageBuffer.writeUInt8(@typeId, pos)
-      pos += 1
+      messageBuffer.writeUInt8(@typeId, 0)
+      pos = 1
+    else 
+      pos = 0
+
     messageBuffer.writeUInt32(payloadBuffer.length + 4, pos)
-    pos += 4
-    payloadBuffer.copy(messageBuffer, pos)
+    payloadBuffer.copy(messageBuffer, pos + 4)
     
     return messageBuffer
 
@@ -41,7 +42,8 @@ class FrontendMessage.Startup extends FrontendMessage
   payload: ->
     pos = 0
     pl = new Buffer(8192)
-    pos += pl.writeUInt32(@protocol, pos)
+    pl.writeUInt32(@protocol, pos)
+    pos += 4
 
     if @user
       pos += pl.writeZeroTerminatedString('user', pos)
@@ -66,7 +68,7 @@ class FrontendMessage.SSLRequest extends FrontendMessage
   
   payload: ->
     pl = new Buffer(4)
-    pl.writeUInt32(@sslMagicNumber)
+    pl.writeUInt32(@sslMagicNumber, 0)
     return pl
     
 class FrontendMessage.Password extends FrontendMessage
@@ -143,7 +145,7 @@ class FrontendMessage.Execute extends FrontendMessage
 
   payload: ->
     b = new Buffer(5 + @portal.length)
-    pos = b.writeZeroTerminatedString(@portal)
+    pos = b.writeZeroTerminatedString(@portal, 0)
     b.writeUInt32(@maxRows, pos)
     return b
 
@@ -163,12 +165,14 @@ class FrontendMessage.Parse extends FrontendMessage
 
   payload: ->
     b = new Buffer(8192)
-    pos  = b.writeZeroTerminatedString(@name, pos)
+    pos  = b.writeZeroTerminatedString(@name, 0)
     pos += b.writeZeroTerminatedString(@sql, pos)
 
-    pos += b.writeUInt16(@parameterTypes.length, pos)
+    b.writeUInt16(@parameterTypes.length, pos)
+    pos += 2
     for paramType in @parameterTypes
-      pos += b.writeUInt32(paramType, pos)
+      b.writeUInt32(paramType, pos)
+      pos += 4
 
     return b.slice(0, pos)
 
@@ -187,11 +191,13 @@ class FrontendMessage.Bind extends FrontendMessage
 
     pos += b.writeZeroTerminatedString(@portal, pos)
     pos += b.writeZeroTerminatedString(@preparedStatement, pos)
-    pos += b.writeUInt16(0x00, pos) # encode values using text
-    pos += b.writeUInt16(@parameterValues.length, pos)
+    b.writeUInt16(0x00, pos) # encode values using text
+    b.writeUInt16(@parameterValues.length, pos + 2)
+    pos += 4
 
     for value in @parameterValues
-      pos += b.writeUInt32(value.length, pos)
+      b.writeUInt32(value.length, pos)
+      pos += 4
       pos += b.write(value, pos)
 
     return b.slice(0, pos)

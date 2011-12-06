@@ -31,7 +31,7 @@ else
         assert.equal err, null
       
       "it should return fields": (err, fields, rows, status) ->
-        assert.length fields, 6
+        assert.equal fields.length, 6
         assert.equal fields[0].name, "field"
         assert.equal fields[1].type, "integer"
         assert.equal fields[2].type, "numeric"
@@ -40,7 +40,7 @@ else
         assert.equal fields[5].type, "boolean"
 
       "it should return rows": (err, fields, rows, status) ->
-        assert.length rows, 1
+        assert.equal rows.length, 1
         assert.deepEqual rows[0], [null, 1, 1.1, 'String', true, false]
 
       "it should return SELECT as status": (err, fields, rows, status) ->
@@ -59,14 +59,14 @@ else
         assert.equal err, null
         
       "it should return fields": (err, fields, rows, status) ->
-        assert.length fields, 4
+        assert.equal fields.length, 4
         assert.equal fields[0].type, "date"
         assert.equal fields[1].type, "timestamp"
         assert.equal fields[2].type, "interval"
         assert.equal fields[3].type, "time"
         
       "it should return rows": (err, fields, rows, status) ->
-        assert.length rows, 1
+        assert.equal rows.length, 1
         assert.deepEqual rows[0], [new Vertica.Date(2010,1,1), new Date(Date.UTC(2010, 0, 1, 12, 30, 0)), new Vertica.Interval(30), new Vertica.Time(4,5,6)]
       
       "results should be JSON.stringifyp-able": (err, fields, rows, status) ->

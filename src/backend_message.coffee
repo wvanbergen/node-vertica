@@ -136,7 +136,7 @@ class BackendMessage.CommandComplete extends BackendMessage
   typeId: 67 # C
   
   read: (buffer) ->
-    @status = buffer.readZeroTerminatedString()
+    @status = buffer.readZeroTerminatedString(0)
 
 
 class BackendMessage.ErrorResponse extends BackendMessage
