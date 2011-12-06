@@ -114,7 +114,7 @@ class BackendMessage.CommandComplete extends BackendMessage
   typeId: 67 # C
   
   read: (buffer) ->
-    @status = buffer.readZeroTerminatedString()
+    @status = buffer.readZeroTerminatedString(0)
 
 
 class BackendMessage.CloseComplete extends BackendMessage
@@ -201,7 +201,7 @@ for name, messageClass of BackendMessage
 
 
 BackendMessage.fromBuffer = (buffer) ->
-  typeId = buffer.readUInt8()
+  typeId = buffer.readUInt8(0)
   messageClass = BackendMessage.types[typeId]
   if messageClass?
     message = new messageClass(buffer.slice(5))

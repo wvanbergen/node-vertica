@@ -1,6 +1,6 @@
 {
   "name": "vertica",
-  "version": "0.2.2",
+  "version": "0.2.5",
   "description": "Pure Javascript client library for Vertica",
   "keywords": ["database", "vertica", "sql"],
   "author": "Willem van Bergen <willem@shopify.com>",
@@ -19,7 +19,7 @@
   ],
   "devDependencies": {
     "coffee-script": ">= 1.1.1",
-    "vows": "0.5.x"
+    "vows": ">= 0.6.0"
   },
   "repository": {
     "type": "git",

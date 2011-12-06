@@ -11,7 +11,7 @@ vow.addBatch
     topic: -> new Buffer([1,1,1,1,1])
     
     "it should write a zero terminated string correctly": (topic) ->
-      topic.writeZeroTerminatedString('test')
+      topic.writeZeroTerminatedString('test', 0)
       assert.deepEqual topic, new Buffer([116, 101, 115, 116, 0])
 
 
@@ -19,7 +19,7 @@ vow.addBatch
     topic: -> new Buffer(4)
   
     "it should write 8-bit integers at the correct position": (topic) -> 
-      topic.writeUInt8(255) # default offset == 0
+      topic.writeUInt8(255, 0)
       topic.writeUInt8(127, 3)
       assert.equal topic[0], 255
       assert.equal topic[3], 127
@@ -35,7 +35,7 @@ vow.addBatch
       assert.equal topic[3], 1
     
     "it should write 32-bit integers with big endian encoding": (topic) ->
-      topic.writeUInt32(16909060)
+      topic.writeUInt32(16909060, 0, 'big')
       assert.equal topic[0], 1
       assert.equal topic[1], 2
       assert.equal topic[2], 3
@@ -52,7 +52,7 @@ vow.addBatch
     topic: -> new Buffer([80,0,80,80,0])
 
     "it should read a string at the beginning of the buffer": (topic) ->
-      assert.equal topic.readZeroTerminatedString(), 'P'
+      assert.equal topic.readZeroTerminatedString(0), 'P'
 
     "it should read a string in the middle of the buffer": (topic) ->
       assert.equal topic.readZeroTerminatedString(2), 'PP'
@@ -62,7 +62,7 @@ vow.addBatch
     topic: -> new Buffer([1,2,3,4])
     
     "it should read 8-bit integers from the correct location": (topic) ->
-      assert.equal topic.readUInt8(), 1  # default offset == 0
+      assert.equal topic.readUInt8(0), 1
       assert.equal topic.readUInt8(1), 2
       assert.equal topic.readUInt8(2), 3
       assert.equal topic.readUInt8(3), 4

@@ -48,18 +48,18 @@ vow.addBatch
     "it should read a message correctly": ->
       message = BackendMessage.fromBuffer(new Buffer([0x54, 0x00, 0x00, 0x00, 0x1b, 0x00, 0x01, 0x69, 0x64, 0x00, 0x00, 0x00, 0x75, 0x9e, 0x00, 0x01, 0x00, 0x00, 0x00, 0x06, 0x00, 0x08, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00]))
       assert.ok message instanceof BackendMessage.RowDescription
-      assert.length message.columns, 1
-      assert.equal  message.columns[0].tableOID, 30110
-      assert.equal  message.columns[0].tableFieldIndex, 1
-      assert.equal  message.columns[0].typeOID, 6
-      assert.equal  message.columns[0].type, "integer"
+      assert.equal message.columns.length, 1
+      assert.equal message.columns[0].tableOID, 30110
+      assert.equal message.columns[0].tableFieldIndex, 1
+      assert.equal message.columns[0].typeOID, 6
+      assert.equal message.columns[0].type, "integer"
 
 
   "DataRow message":
     "it should read a message correctly": ->
       message = BackendMessage.fromBuffer(new Buffer([0x44, 0x00, 0x00, 0x00, 0x0e, 0x00, 0x01, 0x00, 0x00, 0x00, 0x04, 0x70, 0x61, 0x69, 0x64]))
       assert.ok message instanceof BackendMessage.DataRow
-      assert.length message.values, 1
+      assert.equal message.values.length, 1
       assert.equal  String(message.values[0]), 'paid'
 
 
