@@ -5,6 +5,7 @@ padWithZeroes = (str, length) ->
 
 
 exports.typeOIDs =
+  4:    "string"
   5:    "boolean"
   6:    "integer"
   7:    "real"
@@ -182,7 +183,8 @@ stringDecoders =
   default:   (buffer) -> buffer.toString()
 
 binaryDecoders =
-  default: (buffer) -> throw 'Binary decoders not yet supported!'
+  string:    (buffer) -> buffer.toString()
+  default:   (buffer) -> throw 'Binary decoders not yet supported!'
 
 exports.decoders =
   0:        stringDecoders,

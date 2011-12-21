@@ -77,9 +77,22 @@ else
         assert.equal resultset.rows.length, 1
         assert.deepEqual resultset.rows[0], [new Vertica.Date(2010,1,1), new Date(Date.UTC(2010, 0, 1, 12, 30, 0)), new Vertica.Interval(30), new Vertica.Time(4,5,6)]
       
-      "results should be JSON.stringifyp-able": (err, resultset) ->
+      "results should be JSON.stringify-able": (err, resultset) ->
         assert.doesNotThrow -> JSON.stringify(err)
         assert.doesNotThrow -> JSON.stringify(resultset)
     
+
+    "Running a weird internal functions":
+      topic: -> query("SELECT DISPLAY_LICENSE()", @callback)
+      
+      "it should not have an error message": (err, _) ->
+        assert.equal err, null
+    
+      "it should return a resultset instance": (_, resultset) ->
+        assert.ok resultset instanceof Vertica.Resultset
+
+      "it should return a string": (_, resultset) ->
+        assert.ok typeof resultset.theValue()  == 'string'
+
 
   vow.export(module)

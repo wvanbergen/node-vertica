@@ -7,6 +7,16 @@ decoders = require('../src/types').decoders
 vow = vows.describe('Decoding values')
 
 vow.addBatch
+
+  'binary decoders':
+    'string': ->
+      data = new Buffer([104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100])
+      assert.deepEqual decoders.binary.string(data), 'hello world'
+
+    'default': ->
+      assert.throws -> decoders.binary.default(new Buffer)
+    
+
   'string decoders':
   
     'timestamp with timezone': ->
