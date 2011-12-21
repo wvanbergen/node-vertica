@@ -17,7 +17,7 @@ exports.quote = (val) ->
   else if val instanceof Array
     (exports.quote(v) for v in val).join(', ')
   else if val instanceof Date
-    "TIMESTAMP('#{val.toISOString().replace(/T/, ' ').replace(/\.\d+Z$/, '')}')"
+    "'#{val.toISOString().replace(/T/, ' ').replace(/\.\d+Z$/, '')}'::timestamp"
   else 
     "'#{exports.escape(val)}'"
 
