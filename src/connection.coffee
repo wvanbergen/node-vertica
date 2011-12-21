@@ -65,6 +65,9 @@ class Connection extends EventEmitter
     @_writeMessage(new FrontendMessage.Terminate())
     @connection.end()
 
+  isSSL: ->
+    @connection.pair? && @connection.encrypted?
+
   _scheduleJob: (job) ->
     if @busy
       @queue.push job
