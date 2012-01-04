@@ -81,6 +81,16 @@ else
         assert.doesNotThrow -> JSON.stringify(err)
         assert.doesNotThrow -> JSON.stringify(resultset)
     
+    
+    "Running an invalid query":
+      topic: -> query("FAIL", @callback)
+      
+      "it should have an error message": (err, _) ->
+        assert.ok typeof err, 'string'
+        
+      "it should return the connection to a working state": (err, _) ->
+        assert.ok !connection.busy
+    
 
     "Running a weird internal functions":
       topic: -> query("SELECT DISPLAY_LICENSE()", @callback)
