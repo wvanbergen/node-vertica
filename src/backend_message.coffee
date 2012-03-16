@@ -17,9 +17,9 @@ class BackendMessage.Authentication extends BackendMessage
   read: (buffer) ->
     @method = buffer.readUInt32(0)
     if @method == AuthenticationMethods.MD5_PASSWORD
-      @salt = stream.readUInt32(4)
+      @salt = buffer.readUInt32(4)
     else if @method == AuthenticationMethods.CRYPT_PASSWORD
-      @salt = stream.readUInt16(4)
+      @salt = buffer.readUInt16(4)
 
 
 class BackendMessage.BackendKeyData extends BackendMessage
