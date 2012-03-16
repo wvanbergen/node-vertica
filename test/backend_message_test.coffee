@@ -14,6 +14,17 @@ vow.addBatch
       assert.ok message instanceof BackendMessage.Authentication
       assert.equal message.method, 0
 
+    "it should read a message correctly when using MD5_PASSWORD": ->
+      message = BackendMessage.fromBuffer(new Buffer([0x52, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x10]))
+      assert.ok message instanceof BackendMessage.Authentication
+      assert.equal message.method, 5
+      assert.equal message.salt, 16
+
+    "it should read a message correctly when using CRYPT_PASSWORD": ->
+      message = BackendMessage.fromBuffer(new Buffer([0x52, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x04, 0x00, 0x10]))
+      assert.ok message instanceof BackendMessage.Authentication
+      assert.equal message.method, 4
+      assert.equal message.salt, 16
 
   'ParameterStatus message':
     "it should read a message correctly": ->
