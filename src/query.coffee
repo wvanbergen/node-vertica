@@ -23,8 +23,10 @@ class Query extends EventEmitter
     @connection.once 'CopyInResponse',     @onCopyInResponseListener  = @onCopyInResponse.bind(this)
 
   onEmptyQuery: ->
-    @emit 'error', "The query was empty!" unless @callback
-    @callback("The query was empty!") if @callback
+    if @callback
+      @error = "The query was empty!"
+    else
+      @emit 'error', "The query was empty!"
   
   onRowDescription: (msg) ->
     throw "Cannot handle multi-queries with a callback!" if @callback? && @status?
@@ -47,17 +49,24 @@ class Query extends EventEmitter
     @emit 'row', row
     
   onReadyForQuery: (msg) ->
-    @callback(null, new Resultset(fields: @fields, rows: @rows, status: @status)) if @callback
     @_removeAllListeners()
+    if @callback
+      process.nextTick =>
+        if @error
+          @callback(@error)
+        else
+          @callback(null, new Resultset(fields: @fields, rows: @rows, status: @status))
 
   onCommandComplete: (msg) ->
     @status = msg.status if @callback
     @emit 'end', msg.status
 
   onErrorResponse: (msg) ->
-    @_removeAllListeners()
-    @emit 'error', msg.message unless @callback
-    @callback(msg) if @callback
+    if @callback
+      @error = msg 
+    else
+      @emit 'error', msg.message
+
 
   onCopyInResponse: (msg) ->
     @_handlingCopyIn = true

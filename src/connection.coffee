@@ -133,9 +133,6 @@ class Connection extends EventEmitter
       @busy = false
       @transactionStatus = msg.transactionStatus
 
-    @on 'ErrorResponse', (msg) =>
-      @busy = false
-
   _initializeConnection: () ->
     initializers = []
     initializers.push @_initializeRoles              if @connectionOptions.role?
