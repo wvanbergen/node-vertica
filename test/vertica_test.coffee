@@ -27,7 +27,7 @@ vow.addBatch
       
     'dates':
       'it should use the TIMESTAMP cast': ->
-        d = new Date(Date.UTC(2011, 07, 29, 8, 44, 3, 123))
+        d = new Date(Date.UTC(2011, 7, 29, 8, 44, 3, 123))
         assert.equal Vertica.quote(d), "'2011-08-29 08:44:03'::timestamp"
     
   'quoteIdentifier': ->

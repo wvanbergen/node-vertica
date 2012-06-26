@@ -22,7 +22,7 @@ vow.addBatch
     'timestamp with timezone': ->
       # Negative timezone
       data = new Buffer([50, 48, 49, 49, 45, 48, 56, 45, 50, 57, 32, 49, 55, 58, 51, 57, 58, 52, 53, 46, 54, 54, 53, 48, 53, 49, 45, 48, 50, 58, 51, 48])
-      assert.deepEqual decoders.string.timestamp(data), new Date(Date.UTC(2011, 7, 29, 20, 09, 45, 665))
+      assert.deepEqual decoders.string.timestamp(data), new Date(Date.UTC(2011, 7, 29, 20, 9, 45, 665))
 
       # Positive timezone
       data = new Buffer([50, 48, 49, 49, 45, 48, 56, 45, 50, 57, 32, 50, 50, 58, 49, 50, 58, 52, 48, 46, 48, 51, 50, 50, 43, 48, 50])

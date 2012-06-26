@@ -27,7 +27,7 @@ vow.addBatch
       
     "should convert into a javascript Date object": ->
       d = new Vertica.Date(2010, 8, 30)
-      assert.deepEqual d.toDate(), new Date(2010, 07, 30)
+      assert.deepEqual d.toDate(), new Date(2010, 7, 30)
 
     "it should convert into a string": ->
       d = new Vertica.Date(2010, 8, 30)

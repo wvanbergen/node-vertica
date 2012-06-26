@@ -60,13 +60,6 @@ else
         assert.ok resultset instanceof Vertica.Resultset
 
       "it should return fields": (err, resultset) ->
-        assert.length resultset.fields, 4
-        assert.equal resultset.fields[0].type, "date"
-        assert.equal resultset.fields[1].type, "timestamp"
-        assert.equal resultset.fields[2].type, "interval"
-        assert.equal resultset.fields[3].type, "time"
-        
-      "it should return fields": (err, resultset) ->
         assert.equal resultset.fields.length, 4
         assert.equal resultset.fields[0].type, "date"
         assert.equal resultset.fields[1].type, "timestamp"
@@ -91,7 +84,6 @@ else
       "it should return the connection to a working state": (err, _) ->
         assert.ok !connection.busy
     
-
     "Running a weird internal functions":
       topic: -> query("SELECT DISPLAY_LICENSE()", @callback)
       
