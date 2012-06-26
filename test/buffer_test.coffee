@@ -29,7 +29,7 @@ vow.addBatch
       assert.equal topic[2], 1
       assert.equal topic[3], 2
 
-    "it should write 16-bit integers with big endian encoding": (topic) -> 
+    "it should write 16-bit integers with little endian encoding": (topic) -> 
       topic.writeUInt16((1 << 8) | 2, 2, 'little') # default offset == 0
       assert.equal topic[2], 2
       assert.equal topic[3], 1
