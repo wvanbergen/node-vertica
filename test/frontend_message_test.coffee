@@ -181,6 +181,7 @@ vow.addBatch
       topic.options.salt = 'salt'
       topic.options.user = 'user'
       reference = new Buffer([112, 0, 0, 0, 40, 109, 100, 53, 56, 101, 57, 57, 56, 97, 97, 97, 54, 54, 98, 100, 51, 48, 50, 101, 53, 53, 57, 50, 100, 102, 51, 54, 52, 50, 99, 49, 54, 102, 55, 56, 0])
+      
       assert.deepEqual topic.toBuffer().toString(), reference.toString()
 
 
@@ -209,6 +210,13 @@ vow.addBatch
       other = new FrontendMessage.CopyData('123')
       assert.deepEqual topic.toBuffer(), other.toBuffer()
 
+  "Non-latin UTF-8 strings":
+    topic: -> new FrontendMessage.Query("SELECT 'Привет'")
+
+    "it should format the message correctly": (topic) ->
+      reference = new Buffer([81, 0, 0, 0, 26, 83, 69, 76, 69, 67, 84, 32, 39, 208, 159, 209, 128, 208, 184, 208, 178, 208, 181, 209, 130, 39, 0])
+
+      assert.deepEqual topic.toBuffer().toString(), reference.toString()
 
 vow.export(module)
 
