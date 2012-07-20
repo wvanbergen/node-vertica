@@ -13,8 +13,9 @@ class FrontendMessage
   
   toBuffer: ->
     payloadBuffer = @payload()
-    if typeof payloadBuffer == 'string'
-      b = new Buffer(payloadBuffer.length + 1)
+    if typeof payloadBuffer == 'string'      
+      bLength = Buffer.byteLength(payloadBuffer);
+      b = new Buffer(bLength + 1)
       b.writeZeroTerminatedString(payloadBuffer, 0)
       payloadBuffer = b
 
