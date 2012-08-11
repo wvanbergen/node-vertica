@@ -48,11 +48,11 @@ class Connection extends EventEmitter
                 @connection = conn
                 @_bindEventListeners()
                 @_handshake()
-              
-          else if @connectionOptions.ssl == true || @connectionOptions.ssl == 'required'
-            @emit 'error', new Error("The server does not support SSL connection")
-          else 
+          else if @connectionOptions.ssl == "optional"
             @_handshake()
+          else
+            @emit 'error', new Error("The server does not support SSL connection")
+
       else
         @_handshake()
 
