@@ -38,6 +38,16 @@ connection = Vertica.connect host: 'localhost', user: "me", password: 'secret', 
   throw err if err
 ```
 
+*Note:* the `connect` will establish a single connection. A connection can only execute
+one query at the time. Due to the evented nature of node.js, it is possible to start a new
+query while another query is still running. This library implements a simple queueing 
+system that will run queries serially.
+
+If you want parallelism, you will need multiple connections to your server. You can set up
+connection pooling fairly easily using the `generic-pool` library. Note that transactions
+cannot be shared between multiple connections; you need to use the same connection for all 
+queries in the transaction and run them in serial.
+
 ### Querying (buffered)
 
 Running a buffered query will assemble the result in memory and call the callback 
