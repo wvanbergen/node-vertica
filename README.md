@@ -1,33 +1,87 @@
 # node-vertica
 
-A pure javascript library to connect to a Vertica database.
+A pure javascript library to connect to a Vertica database. Except that it is written in CoffeeScript.
 
 ## Installation
 
     npm install vertica
 
-## Example
+## Getting started
+
+### Connecting
+
+Call the `connect` method with a connection options object. The following connection 
+options are supported.
+
+- `host`: the host to connect to (default: `"localhost"`)
+- `port`: the remote port to connect to (default: `5433`)
+- `user`: the username to use for authentication
+- `password`: the password to use for authentication
+- `database`: the database to connect to. If your Vertica server only has a single
+  database, you can leave this blank.
+- `ssl`: whether to encrypt the connection using SSL. The following values are supported:
+    - `false`: no SSL
+    - `"optional"`: use SSL if the server supports it, but fall back to no SSL if not (default).
+    - `"required"`: use SSL, throw an error if the server doesn't support it.
+    - `"verified"`: use SSL, throw an error if the server doesn't support it or its SSL 
+      certificate could not be verified.
+- `role`: Runs a `SET ROLE` query to activate a role for the user immediately after connecting.
+- `searchPath`: Runs a `SET SEARCH_PATH TO` query to set the search path after connecting. 
+- `timezone`: Runs a `SET TIMEZONE TO` query to set the connection's time zone after connecting.
+- `initializer`: a callback function that gets called after connection but before any query 
+  gets executed.
 
 ```coffeescript
 
 Vertica = require 'vertica'
-
-connection = Vertica.connect user: "username", password: 'password', database: "database", host: 'localhost', (err) ->
+connection = Vertica.connect host: 'localhost', user: "me", password: 'secret', (err) ->
   throw err if err
-  
-  # unbuffered
-  query = connection.query "SELECT * FROM table"
-  query.on 'fields', (fields) ->
-    console.log("Fields:", fields)
-
-  query.on 'row', (row) ->
-    console.log(row)
-
-  query.on 'end', (status) ->
-    console.log("Finished!", status)
-
-  # buffered
-  connection.query "SELECT * FROM table", (err, resultset) ->
-    console.log err, resultset.fields, resultset.rows, resultset.status
-
 ```
+
+### Querying (buffered)
+
+Running a buffered query will assemble the result in memory and call the callback 
+function when it is completed.
+
+```coffeescript
+
+connection = Vertica.connect(...)
+connection.query "SELECT * FROM table", (err, resultset) ->
+  console.log err, resultset.fields, resultset.rows, resultset.status
+
+# or, identically:
+
+query = Vertica.connect(...).query "SELECT * FROM table"
+query.callback = (err, resultset) -> ...
+```
+
+### Querying (unbuffered)
+ 
+Running an unbuffered query will immediately emit incoming data as events and
+will not store the result in memory. Recommended for handling huge resultsets.
+
+```coffeescript
+
+connection = Vertica.connect(...)
+query = connection.query "SELECT * FROM table"
+
+# 'fields' is emitted once.
+query.on 'fields', (fields) -> console.log("Fields:", fields)
+
+# 'row' is emitted 0..* times, once for every row in the resultset.
+query.on 'row', (row) -> console.log(row)
+
+# 'end' is emitted once.
+query.on 'end', (status) -> console.log("Finished!", status)
+
+# If 'error' is emitted, no more events will follow.
+# If no event handler is implemented, an exceptions gets thrown instead.
+query.on 'error', (err) -> console.log("Uh oh!", err)
+```
+
+## About
+
+- MIT licensed (see LICENSE).
+- Written by Willem van Bergen for Shopify Inc.
+- Pull requests are gladly accepted. Please modify the CoffeeScript source files
+  in the `/src` folder, and not the compiled JavaScript output files.
