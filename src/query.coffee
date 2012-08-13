@@ -82,8 +82,10 @@ class Query extends EventEmitter
       return @copyInSource
 
     else if typeof @copyInSource == 'string' # copy from file
-      if require('path').existsSync(@copyInSource)
-        stream = require('fs').createReadStream(@copyInSource)
+      fs = require('fs')
+      existsSync = fs.existsSync? || require('path').existsSync
+      if existsSync(@copyInSource)
+        stream = fs.createReadStream(@copyInSource)
         @_getStreamCopyInHandler(stream)
       else
         @copyFail("Could not find local file #{@dataSource}.")

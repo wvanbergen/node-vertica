@@ -3,7 +3,7 @@ fs     = require 'fs'
 vows   = require 'vows'
 assert = require 'assert'
 
-if !path.existsSync('./test/connection.json')
+if !fs.existsSync('./test/connection.json')
   console.error "Create test/connection.json to run functional tests"
 
 else
