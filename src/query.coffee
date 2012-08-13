@@ -83,7 +83,7 @@ class Query extends EventEmitter
 
     else if typeof @copyInSource == 'string' # copy from file
       fs = require('fs')
-      existsSync = fs.existsSync? || require('path').existsSync
+      existsSync = fs.existsSync || require('path').existsSync
       if existsSync(@copyInSource)
         stream = fs.createReadStream(@copyInSource)
         @_getStreamCopyInHandler(stream)
