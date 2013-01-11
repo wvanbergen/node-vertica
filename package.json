@@ -1,6 +1,6 @@
 {
   "name": "vertica",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Pure Javascript client library for Vertica",
   "keywords": ["database", "vertica", "sql"],
   "author": "Willem van Bergen <willem@shopify.com>",
