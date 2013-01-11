@@ -36,13 +36,14 @@ else
       topic: -> connect(password: 'absolute_nonsense', @callback)
 
       "it should not have an error message": (err, _) ->
-        assert.ok err?
+        assert.ok err?, "Connecting should fail with a wrong password."
 
     "it should use SSL if requested":
       topic: -> connect(ssl: 'required', @callback)
 
-      "it should connect with an cleartext and encrypted socket pair": (_, conn) ->
-        assert.ok conn.isSSL()
+      "it should connect with an cleartext and encrypted socket pair": (err, conn) ->
+        if err != 'The server does not support SSL connection'
+          assert.ok conn.isSSL(), "Connection should be using SSL but isn't."
 
     "it should not use SSL if explicitely requested":
       topic: -> connect(ssl: false, @callback)
