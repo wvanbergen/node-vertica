@@ -42,7 +42,8 @@ class Connection extends EventEmitter
               if !conn.authorized && @connectionOptions.ssl == 'verified'
                 conn.end()
                 @disconnect()
-                @emit 'error', new Error(conn.authorizationError)
+                err = new Error(conn.authorizationError)
+                if @connectedCallback then @connectedCallback(err.message) else @emit 'error', err
               else
                 @emit 'warn', conn.authorizationError unless conn.authorized
                 @connection = conn
@@ -51,7 +52,8 @@ class Connection extends EventEmitter
           else if @connectionOptions.ssl == "optional"
             @_handshake()
           else
-            @emit 'error', new Error("The server does not support SSL connection")
+            err = new Error("The server does not support SSL connection")
+            if @connectedCallback then @connectedCallback(err.message) else @emit 'error', err
 
       else
         @_handshake()
@@ -101,7 +103,6 @@ class Connection extends EventEmitter
     q = new Query(this, sql, callback)
     q.copyInSource = source
     @_scheduleJob(q)
-
 
   _handshake: ->
     authenticationFailureHandler = (err) =>
