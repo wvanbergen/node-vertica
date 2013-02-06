@@ -51,4 +51,15 @@ else
       "it should connect without an SSL socket": (_, conn) ->
         assert.ok !conn.isSSL()
 
+    "it should be able to interrupt the session":
+      topic: -> 
+        connect interruptable: true, (err, conn) =>
+          @callback(err) if err?
+          conn.query "SELECT sleep(10)", @callback
+          setTimeout conn.interruptSession.bind(conn), 100
+
+      "it should not close the connection": (err, _) ->
+        assert.equal err, 'The connection was closed.'
+
+
   vow.export(module)

@@ -184,6 +184,7 @@ stringDecoders =
 
 binaryDecoders =
   string:    (buffer) -> buffer.toString()
+  integer:   (buffer) -> +buffer
   default:   (buffer) -> throw 'Binary decoders not yet supported!'
 
 exports.decoders =

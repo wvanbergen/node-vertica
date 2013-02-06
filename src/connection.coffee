@@ -84,6 +84,7 @@ class Connection extends EventEmitter
     throw "Connection is busy" if @busy
 
     @busy = true
+    @currentJob = job
     job.run()
     return job
 
@@ -132,15 +133,18 @@ class Connection extends EventEmitter
 
     @on   'ReadyForQuery', (msg) => 
       @busy = false
+      @currentJob = false
       @transactionStatus = msg.transactionStatus
 
   _initializeConnection: () ->
     initializers = []
-    initializers.push @_initializeRoles              if @connectionOptions.role?
-    initializers.push @_initializeSearchPath         if @connectionOptions.searchPath?
-    initializers.push @_initializeTimezone           if @connectionOptions.timezone?
-    initializers.push @connectionOptions.initializer if @connectionOptions.initializer?
-    
+    unless @connectionOptions.skipInitialization
+      initializers.push @_initializeInterrupt          if @connectionOptions.interruptable
+      initializers.push @_initializeRoles              if @connectionOptions.role?
+      initializers.push @_initializeSearchPath         if @connectionOptions.searchPath?
+      initializers.push @_initializeTimezone           if @connectionOptions.timezone?
+      initializers.push @connectionOptions.initializer if @connectionOptions.initializer?
+
     chain = @_initializationSuccess.bind(this)
     for initializer in initializers
       chain = initializer.bind(this, chain, @_initializationFailure.bind(this))
@@ -164,6 +168,11 @@ class Connection extends EventEmitter
     @_queryDirect "SET TIMEZONE TO '#{@connectionOptions.timezone}'", (err, result) =>
       if err? then fail(err) else next()
 
+  _initializeInterrupt: (next, fail) ->
+    @_queryDirect "SELECT session_id FROM v_monitor.current_session", (err, result) =>
+      if err? then fail(err) 
+      @sessionID = result.theValue()
+      next()
 
   _initializationSuccess: ->
     @on 'ReadyForQuery', @_processJobQueue.bind(this)
@@ -197,12 +206,13 @@ class Connection extends EventEmitter
       @incomingData = @incomingData.slice(size + 1)
       size = @incomingData.readUInt32(1)
 
-
   _onClose: (error)->
+    @currentJob.onConnectionError("The connection was closed.") if @currentJob
     @connected = false
     @emit 'close', error
     
   _onTimeout: () ->
+    @currentJob.onConnectionError("The connection timed out closed.") if @currentJob
     @emit 'timeout'
     
   _onError: (exception) ->
@@ -211,6 +221,47 @@ class Connection extends EventEmitter
   _writeMessage: (msg, callback) ->
     console.log '=>', msg.__proto__.constructor.name, msg if @debug
     @connection.write(msg.toBuffer(), null, callback)
+
+  isInterruptable: ->
+    @sessionID?
+
+  _interruptConnection: (cb) ->
+    if @sessionID?
+      bareConnectionOptions = { skipInitialization: true }
+      bareConnectionOptions.__proto__ = @connectionOptions
+      bareClient = new Connection(bareConnectionOptions)
+      bareClient.connect(cb)
+    else
+      cb("Cannot intterupt connection! It's not initialized as interruptable.", null)
+
+  _success: (err, cb) ->
+    if err? 
+      if cb? then cb(err) else @emit 'error', new Error(err)
+      return false
+    else 
+      return true
+
+  interruptSession: (cb) ->
+    @_interruptConnection (err, conn) =>
+      if @_success(err, cb)
+        conn.query "SELECT CLOSE_SESSION('#{@sessionID}')", (err, rs) =>
+          conn.disconnect()
+          cb(null, rs.theValue()) if @_success(err, cb) && cb?
+      
+
+  interruptStatement: (cb) ->
+    @_interruptConnection (err, conn) =>
+      if @_success(err, cb)
+        conn.query "SELECT statement_id FROM v_monitor.sessions WHERE session_id = '#{@sessionID}'", (err, rs) =>
+          if !@_success(err, cb)
+            conn.disconnect()
+          else if rs.getLength() == 1 && statementID = rs.theValue()
+            bareClient.query "SELECT INTERRUPT_STATEMENT('#{@sessionID}', statementID)", (err, rs) =>
+              conn.disconnect()
+              cb(null, rs.theValue()) if @_success(err, cb) && cb?
+          else
+            conn.disconnect()
+            @_success("Session #{@sessionID} is not running a statement at the moment.", cb)
 
 
 # Exports

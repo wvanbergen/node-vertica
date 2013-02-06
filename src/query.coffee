@@ -67,6 +67,12 @@ class Query extends EventEmitter
     else
       @emit 'error', msg.message
 
+  onConnectionError: (msg) ->
+    @_removeAllListeners()
+    if @callback
+      process.nextTick => @callback(msg)
+    else
+      @emit 'error', msg
 
   onCopyInResponse: (msg) ->
     @_handlingCopyIn = true

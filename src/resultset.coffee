@@ -9,5 +9,8 @@ class Resultset
   theValue: ->
     @rows[0][0]
 
+  getLength: ->
+    @rows.length
+
 
 module.exports = Resultset
