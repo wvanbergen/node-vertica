@@ -18,7 +18,7 @@ exports.quote = (val) ->
     (exports.quote(v) for v in val).join(', ')
   else if val instanceof Date
     "'#{val.toISOString().replace(/T/, ' ').replace(/\.\d+Z$/, '')}'::timestamp"
-  else 
+  else
     "'#{exports.escape(val)}'"
 
 exports.quoteIdentifier = (val) ->

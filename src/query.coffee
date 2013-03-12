@@ -4,7 +4,7 @@ decoders        = require('./types').decoders
 Resultset       = require('./resultset')
 
 class Query extends EventEmitter
-  
+
   constructor: (@connection, @sql, @callback) ->
     @_handlingCopyIn = false
 
@@ -13,7 +13,7 @@ class Query extends EventEmitter
     @emit 'start'
 
     @connection._writeMessage(new FrontendMessage.Query(@sql))
-    
+
     @connection.once 'EmptyQueryResponse', @onEmptyQueryListener      = @onEmptyQuery.bind(this)
     @connection.on   'RowDescription',     @onRowDescriptionListener  = @onRowDescription.bind(this)
     @connection.on   'DataRow',            @onDataRowListener         = @onDataRow.bind(this)
@@ -27,10 +27,10 @@ class Query extends EventEmitter
       @error = "The query was empty!"
     else
       @emit 'error', "The query was empty!"
-  
+
   onRowDescription: (msg) ->
     throw "Cannot handle multi-queries with a callback!" if @callback? && @status?
-    
+
     @fields = []
     for column in msg.columns
       field = new Query.Field(column)
@@ -39,15 +39,15 @@ class Query extends EventEmitter
 
     @rows = [] if @callback
     @emit 'fields', @fields
-    
+
   onDataRow: (msg) ->
     row = []
     for value, index in msg.values
       row.push if value? then @fields[index].decoder(value) else null
-    
+
     @rows.push row if @callback
     @emit 'row', row
-    
+
   onReadyForQuery: (msg) ->
     @_removeAllListeners()
     if @callback
@@ -63,7 +63,7 @@ class Query extends EventEmitter
 
   onErrorResponse: (msg) ->
     if @callback
-      @error = msg 
+      @error = msg
     else
       @emit 'error', msg.message
 
@@ -79,10 +79,10 @@ class Query extends EventEmitter
     dataHandler    = (data) => @copyData(data)
     successHandler = () => @copyDone()
     failureHandler = (err) => @copyFail(err)
-    
+
     copyInHandler = @_getCopyInHandler()
     copyInHandler(dataHandler, successHandler, failureHandler)
-    
+
   _getCopyInHandler: ->
     if typeof @copyInSource == 'function'
       return @copyInSource

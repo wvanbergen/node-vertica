@@ -29,9 +29,9 @@ pipe = (pair, socket) =>
   cleartext.encrypted = pair.encrypted
   cleartext.authorized = false
 
-  onError = (e) -> 
+  onError = (e) ->
     cleartext.emit('error', e) if (cleartext._controlReleased)
-  
+
   onClose = ->
     socket.removeListener('error', onError)
     socket.removeListener('close', onClose)

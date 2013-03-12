@@ -6,9 +6,9 @@ FrontendMessage = require('./frontend_message')
 BackendMessage  = require('./backend_message')
 Authentication  = require('./authentication')
 Query           = require('./query')
- 
+
 class Connection extends EventEmitter
-  
+
   constructor: (@connectionOptions) ->
     @connectionOptions.host   ?= 'localhost'
     @connectionOptions.port   ?= 5433
@@ -28,11 +28,11 @@ class Connection extends EventEmitter
   connect: (callback) ->
     @connectedCallback = callback
     @connection = net.createConnection @connectionOptions.port, @connectionOptions.host
-    
+
     @connection.on 'connect', =>
       @connected = true
       @_bindEventListeners()
-      
+
       if @connectionOptions.ssl
         @_writeMessage(new FrontendMessage.SSLRequest)
         @connection.once 'data', (buffer) =>
@@ -76,9 +76,9 @@ class Connection extends EventEmitter
       @emit 'queuejob', job
     else
       @_runJob(job)
-      
+
     return job
-  
+
   _runJob: (job) ->
     throw "Connection is closed" unless @connected
     throw "Connection is busy" if @busy
@@ -93,7 +93,7 @@ class Connection extends EventEmitter
       @_runJob(@queue.shift())
     else
       @emit 'ready', this
-    
+
   query: (sql, callback) ->
     @_scheduleJob(new Query(this, sql, callback))
 
@@ -110,16 +110,16 @@ class Connection extends EventEmitter
       if @connectedCallback then @connectedCallback(err.message) else @emit 'error', err
 
     authenticationHandler = (msg) =>
-      switch msg.method 
+      switch msg.method
         when Authentication.methods.OK
-          @once 'ReadyForQuery', (msg) => 
+          @once 'ReadyForQuery', (msg) =>
             @removeListener 'ErrorResponse', authenticationFailureHandler
             @_initializeConnection()
-          
+
         when Authentication.methods.CLEARTEXT_PASSWORD, Authentication.methods.MD5_PASSWORD
           @_writeMessage(new FrontendMessage.Password(@connectionOptions.password, msg.method, salt: msg.salt, user: @connectionOptions.user))
           @once 'Authentication', authenticationHandler
-          
+
         else
           throw new Error("Autentication method #{msg.method} not supported.")
 
@@ -131,7 +131,7 @@ class Connection extends EventEmitter
     @on   'ParameterStatus', (msg) => @parameters[msg.name] = msg.value
     @on   'BackendKeyData',  (msg) => [@pid, @key] = [msg.pid, msg.key]
 
-    @on   'ReadyForQuery', (msg) => 
+    @on   'ReadyForQuery', (msg) =>
       @busy = false
       @currentJob = false
       @transactionStatus = msg.transactionStatus
@@ -139,7 +139,7 @@ class Connection extends EventEmitter
   _initializeConnection: () ->
     initializers = []
     unless @connectionOptions.skipInitialization
-      initializers.push @_initializeInterrupt          if @connectionOptions.interruptable
+      initializers.push @_initializeInterrupt          if @connectionOptions.interruptible
       initializers.push @_initializeRoles              if @connectionOptions.role?
       initializers.push @_initializeSearchPath         if @connectionOptions.searchPath?
       initializers.push @_initializeTimezone           if @connectionOptions.timezone?
@@ -148,7 +148,7 @@ class Connection extends EventEmitter
     chain = @_initializationSuccess.bind(this)
     for initializer in initializers
       chain = initializer.bind(this, chain, @_initializationFailure.bind(this))
-    
+
     chain()
 
 
@@ -170,7 +170,7 @@ class Connection extends EventEmitter
 
   _initializeInterrupt: (next, fail) ->
     @_queryDirect "SELECT session_id FROM v_monitor.current_session", (err, result) =>
-      if err? then fail(err) 
+      if err? then fail(err)
       @sessionID = result.theValue()
       next()
 
@@ -178,10 +178,10 @@ class Connection extends EventEmitter
     @on 'ReadyForQuery', @_processJobQueue.bind(this)
     @_processJobQueue()
     @connectedCallback(null, this) if @connectedCallback
-    
+
   _initializationFailure: (err) ->
     if @connectedCallback then @connectedCallback(err) else @emit 'error', err
-      
+
 
   _onData: (buffer) ->
     # Append the new data with the previous buffer's residue if there was any.
@@ -210,19 +210,19 @@ class Connection extends EventEmitter
     @currentJob.onConnectionError("The connection was closed.") if @currentJob
     @connected = false
     @emit 'close', error
-    
+
   _onTimeout: () ->
     @currentJob.onConnectionError("The connection timed out closed.") if @currentJob
     @emit 'timeout'
-    
+
   _onError: (exception) ->
     @emit 'error', exception
-    
+
   _writeMessage: (msg, callback) ->
     console.log '=>', msg.__proto__.constructor.name, msg if @debug
     @connection.write(msg.toBuffer(), null, callback)
 
-  isInterruptable: ->
+  isInterruptible: ->
     @sessionID?
 
   _interruptConnection: (cb) ->
@@ -232,13 +232,13 @@ class Connection extends EventEmitter
       bareClient = new Connection(bareConnectionOptions)
       bareClient.connect(cb)
     else
-      cb("Cannot intterupt connection! It's not initialized as interruptable.", null)
+      cb("Cannot interrupt connection! It's not initialized as interruptible.", null)
 
   _success: (err, cb) ->
-    if err? 
+    if err?
       if cb? then cb(err) else @emit 'error', new Error(err)
       return false
-    else 
+    else
       return true
 
   interruptSession: (cb) ->
@@ -247,7 +247,7 @@ class Connection extends EventEmitter
         conn.query "SELECT CLOSE_SESSION('#{@sessionID}')", (err, rs) =>
           conn.disconnect()
           cb(null, rs.theValue()) if @_success(err, cb) && cb?
-      
+
 
   interruptStatement: (cb) ->
     @_interruptConnection (err, conn) =>

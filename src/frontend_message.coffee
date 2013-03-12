@@ -7,13 +7,13 @@ Buffer          = require('./buffer').Buffer
 
 class FrontendMessage
   typeId: null
-  
+
   payload: ->
     new Buffer(0)
-  
+
   toBuffer: ->
     payloadBuffer = @payload()
-    if typeof payloadBuffer == 'string'      
+    if typeof payloadBuffer == 'string'
       bLength = Buffer.byteLength(payloadBuffer);
       b = new Buffer(bLength + 1)
       b.writeZeroTerminatedString(payloadBuffer, 0)
@@ -21,25 +21,25 @@ class FrontendMessage
 
     headerLength  = if @typeId? then 5 else 4
     messageBuffer = new Buffer(headerLength + payloadBuffer.length)
-    
+
     if @typeId
       messageBuffer.writeUInt8(@typeId, 0)
       pos = 1
-    else 
+    else
       pos = 0
 
     messageBuffer.writeUInt32(payloadBuffer.length + 4, pos)
     payloadBuffer.copy(messageBuffer, pos + 4)
-    
+
     return messageBuffer
 
 
 class FrontendMessage.Startup extends FrontendMessage
   typeId: null
   protocol: 3 << 16
-  
+
   constructor: (@user, @database, @options) ->
-    
+
   payload: ->
     pos = 0
     pl = new Buffer(8192)
@@ -57,25 +57,25 @@ class FrontendMessage.Startup extends FrontendMessage
     if @options
       pos += pl.writeZeroTerminatedString('options', pos)
       pos += pl.writeZeroTerminatedString(@options,  pos)
-    
+
     pl.writeUInt8(0, pos)
     pos += 1
     return pl.slice(0, pos)
-    
-    
+
+
 class FrontendMessage.SSLRequest extends FrontendMessage
   typeId: null
   sslMagicNumber: 80877103
-  
+
   payload: ->
     pl = new Buffer(4)
     pl.writeUInt32(@sslMagicNumber, 0)
     return pl
-    
+
 class FrontendMessage.Password extends FrontendMessage
   typeId: 112
 
-  constructor: (@password, @authMethod, @options) -> 
+  constructor: (@password, @authMethod, @options) ->
     @password   ?= ''
     @authMethod ?= Authentication.methods.CLEARTEXT_PASSWORD
     @options    ?= {}
@@ -86,9 +86,9 @@ class FrontendMessage.Password extends FrontendMessage
     hash.digest('hex')
 
   encodedPassword: ->
-    switch @authMethod 
+    switch @authMethod
       when Authentication.methods.CLEARTEXT_PASSWORD then @password
-      when Authentication.methods.MD5_PASSWORD then "md5" + @md5(@md5(@password + @options.user) + @options.salt) 
+      when Authentication.methods.MD5_PASSWORD then "md5" + @md5(@md5(@password + @options.user) + @options.salt)
       else throw new Error("Authentication method #{@authMethod} not implemented.")
 
   payload: ->
@@ -97,9 +97,9 @@ class FrontendMessage.Password extends FrontendMessage
 
 class FrontendMessage.CancelRequest extends FrontendMessage
   cancelRequestMagicNumber: 80877102
-  
+
   constructor: (@backendPid, @backendKey) ->
-  
+
   payload: ->
     b = new Buffer(12)
     b.writeUInt32(@cancelRequestMagicNumber, 0)
@@ -147,8 +147,8 @@ class FrontendMessage.Execute extends FrontendMessage
   constructor: (@portal, @maxRows) ->
     @portal  ?= ""
     @maxRows ?= 0
-    
-    
+
+
   payload: ->
     b = new Buffer(5 + @portal.length)
     pos = b.writeZeroTerminatedString(@portal, 0)
@@ -166,7 +166,7 @@ class FrontendMessage.Query extends FrontendMessage
 
 class FrontendMessage.Parse extends FrontendMessage
   typeId: 80
-    
+
   constructor: (@name, @sql, @parameterTypes) ->
     @name ?= ""
     @parameterTypes ?= []
@@ -225,9 +225,9 @@ class FrontendMessage.Terminate extends FrontendMessage
 
 class FrontendMessage.CopyData extends FrontendMessage
   typeId: 100
-  
+
   constructor: (@data) ->
-    
+
   payload: ->
     new Buffer(@data)
 
@@ -240,7 +240,7 @@ class FrontendMessage.CopyFail extends FrontendMessage
   typeId: 102
 
   constructor: (@error) ->
-    
+
   payload: ->
     @error
 
