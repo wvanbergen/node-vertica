@@ -1,4 +1,4 @@
-Authentication = 
+Authentication =
   methods:
     OK: 0
     KERBEROS_V5: 2
@@ -9,7 +9,7 @@ Authentication =
     GSS: 7
     GSS_CONTINUE: 8
     SSPI: 9
-  
+
 
 # Exports
 module.exports = Authentication

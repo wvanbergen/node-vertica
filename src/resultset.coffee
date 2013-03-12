@@ -5,7 +5,7 @@ class Resultset
     @rows    = object.rows    || []
     @notices = object.notices || []
     @status  = object.status
-  
+
   theValue: ->
     @rows[0][0]
 

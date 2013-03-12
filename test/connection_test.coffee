@@ -14,10 +14,10 @@ else
   connect = (info, callback) ->
     for key, value of baseConnectionInfo
       info[key] ?= value
-      
+
     connection = Vertica.connect info, (err) -> callback(err, connection)
     undefined
-  
+
 
   vow = vows.describe('Query')
 
@@ -52,8 +52,8 @@ else
         assert.ok !conn.isSSL()
 
     "it should be able to interrupt the session":
-      topic: -> 
-        connect interruptable: true, (err, conn) =>
+      topic: ->
+        connect interruptible: true, (err, conn) =>
           @callback(err) if err?
           conn.query "SELECT sleep(10)", @callback
           setTimeout conn.interruptSession.bind(conn), 100

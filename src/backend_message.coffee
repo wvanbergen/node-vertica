@@ -3,17 +3,17 @@ typeOIDs = require('./types').typeOIDs
 
 class BackendMessage
   typeId: null
-  
+
   constructor: (buffer) ->
     @read(buffer)
-  
+
   read: (buffer) ->
     # Implement me in subclass
 
 
 class BackendMessage.Authentication extends BackendMessage
   typeId: 82 # R
-  
+
   read: (buffer) ->
     @method = buffer.readUInt32(0)
     if @method == AuthenticationMethods.MD5_PASSWORD
@@ -40,7 +40,7 @@ class BackendMessage.ParameterStatus extends BackendMessage
 
 class BackendMessage.NotificationResponse extends BackendMessage
   typeId: 65 # A
-  
+
   read: (buffer) ->
     @pid = buffer.readUInt32(4)
     @channel = buffer.readZeroTerminatedString(4)
@@ -53,7 +53,7 @@ class BackendMessage.EmptyQueryResponse extends BackendMessage
 
 class BackendMessage.RowDescription extends BackendMessage
   typeId: 84 # T
-  
+
   read: (buffer) ->
     numberOfFields = buffer.readUInt16(0)
     pos = 2
@@ -76,7 +76,7 @@ class BackendMessage.RowDescription extends BackendMessage
       pos += 2
 
 
-      fieldDescriptor = 
+      fieldDescriptor =
         name: name
         tableOID: tableOID
         tableFieldIndex: tableFieldIndex
@@ -91,7 +91,7 @@ class BackendMessage.RowDescription extends BackendMessage
 
 class BackendMessage.DataRow extends BackendMessage
   typeId: 68 # D
-  
+
   read: (buffer) ->
     numberOfFields = buffer.readUInt16(0)
     pos = 2
@@ -106,13 +106,13 @@ class BackendMessage.DataRow extends BackendMessage
       else
         data = buffer.slice(pos, pos + length)
         pos += length
-      
+
       @values.push(data)
-    
-  
+
+
 class BackendMessage.CommandComplete extends BackendMessage
   typeId: 67 # C
-  
+
   read: (buffer) ->
     @status = buffer.readZeroTerminatedString(0)
 
@@ -135,7 +135,7 @@ class BackendMessage.ParseComplete extends BackendMessage
 
 class BackendMessage.ErrorResponse extends BackendMessage
   typeId: 69 # E
-  
+
   fieldNames:
     83:  'Severity'
     67:  'Code'
@@ -149,17 +149,17 @@ class BackendMessage.ErrorResponse extends BackendMessage
     70:  'File'
     76:  'Line'
     82:  'Routine'
-  
+
   read: (buffer) ->
     @information = {}
-    
+
     fieldCode = buffer.readUInt8(0)
     pos = 1
     while fieldCode != 0x00
       value = buffer.readZeroTerminatedString(pos)
       @information[@fieldNames[fieldCode] || fieldCode] = value
       pos += Buffer.byteLength(value) + 1
-      
+
       fieldCode = buffer.readUInt8(pos)
       pos += 1
 
@@ -191,7 +191,7 @@ class BackendMessage.CopyInResponse extends BackendMessage
 
 ##############################################################
 # BackendMessage factory
-############################################################## 
+##############################################################
 
 BackendMessage.types = {}
 for name, messageClass of BackendMessage
@@ -207,7 +207,7 @@ BackendMessage.fromBuffer = (buffer) ->
     message = new messageClass(buffer.slice(5))
     message
   else
-    throw new Error("Unkown message type: #{typeId}")
+    throw new Error("Unknown message type: #{typeId}")
 
 
 module.exports = BackendMessage
