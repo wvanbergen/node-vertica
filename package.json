@@ -1,9 +1,9 @@
 {
   "name": "vertica",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "description": "Pure Javascript client library for Vertica",
   "keywords": ["database", "vertica", "sql"],
-  "author": "Willem van Bergen <willem@shopify.com>",
+  "author": "Willem van Bergen <willem@railsdoctors.com>",
   "licenses": [
     {
       "type": "MIT",
@@ -13,7 +13,7 @@
   "maintainers": [
     {
       "name": "Willem van Bergen",
-      "email": "willem@shopify.com",
+      "email": "willem@railsdoctors.com",
       "web": "http://www.vanbergen.org" 
     }
   ],
