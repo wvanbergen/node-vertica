@@ -29,7 +29,13 @@ class Connection extends EventEmitter
     @connectedCallback = callback
     @connection = net.createConnection @connectionOptions.port, @connectionOptions.host
 
+    initialErrorHandler = (err) =>
+      if @connectedCallback then @connectedCallback(err.message) else @emit 'error', err
+
+    @connection.on 'error', initialErrorHandler
+
     @connection.on 'connect', =>
+      @connection.removeListener 'error', initialErrorHandler
       @connected = true
       @_bindEventListeners()
 
