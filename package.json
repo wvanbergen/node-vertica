@@ -1,6 +1,6 @@
 {
   "name": "vertica",
-  "version": "0.3.6",
+  "version": "0.4.0",
   "description": "Pure Javascript client library for Vertica",
   "keywords": ["database", "vertica", "sql"],
   "author": "Willem van Bergen <willem@railsdoctors.com>",
@@ -18,8 +18,8 @@
     }
   ],
   "devDependencies": {
-    "coffee-script": ">= 1.1.1",
-    "vows": ">= 0.6.0"
+    "coffee-script": "~> 1.6.2",
+    "vows": "~> 0.7.0"
   },
   "repository": {
     "type": "git",
@@ -31,7 +31,7 @@
     "src": "./src",
     "test": "./test"
   },
-  "engine": { "node" : "0.4 || 0.5 || 0.6 || 0.8" },
+  "engine": { "node" : ">= 0.8" },
   "scripts": {
     "prepublish": "cake clean && cake build",
     "test": "vows test/*.coffee"
