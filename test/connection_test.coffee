@@ -22,6 +22,12 @@ else
   vow = vows.describe('Query')
 
   vow.addBatch
+    "it should fail to connect to an invalid host":
+      topic: -> connect({host: 'fake.fake'}, @callback)
+
+      "it should have an error message": (err, _) ->
+        assert.ok err?, "Connecting should fail with a fake host."
+
     "it should connect properly with the base info":
       topic: -> connect({}, @callback)
 
