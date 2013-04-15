@@ -199,19 +199,22 @@ class Connection extends EventEmitter
       buffer.copy(bufferedData, @incomingData.length)
       @incomingData = bufferedData
 
-    size = @incomingData.readUInt32(1) # start at 1 to skip the message ID
-    while @incomingData.length >= 5 && size + 1 <= @incomingData.length
 
-      # parse message
-      message = BackendMessage.fromBuffer(@incomingData.slice(0, size + 1))
-      console.log '<=', message.event, message if @debug
-      @emit 'message', message
-      @emit message.event, message
+     # start at 1 to skip the message ID
+    while @incomingData.length >= 5
+      size = @incomingData.readUInt32BE(1)
+  
+      if size + 1 <= @incomingData.length
+        # parse message
+        message = BackendMessage.fromBuffer(@incomingData.slice(0, size + 1))
+        console.log '<=', message.event, message if @debug
+        @emit 'message', message
+        @emit message.event, message
 
-      # update loop variables
-      @incomingData = @incomingData.slice(size + 1)
-      size = @incomingData.readUInt32(1)
+        # update loop variables
+        @incomingData = @incomingData.slice(size + 1)
 
+  
   _onClose: (error)->
     @currentJob.onConnectionError("The connection was closed.") if @currentJob
     @connected = false

@@ -15,19 +15,19 @@ class BackendMessage.Authentication extends BackendMessage
   typeId: 82 # R
 
   read: (buffer) ->
-    @method = buffer.readUInt32(0)
+    @method = buffer.readUInt32BE(0)
     if @method == AuthenticationMethods.MD5_PASSWORD
-      @salt = buffer.readUInt32(4)
+      @salt = buffer.readUInt32BE(4)
     else if @method == AuthenticationMethods.CRYPT_PASSWORD
-      @salt = buffer.readUInt16(4)
+      @salt = buffer.readUInt16BE(4)
 
 
 class BackendMessage.BackendKeyData extends BackendMessage
   typeId: 75 # K
 
   read: (buffer) ->
-    @pid = buffer.readUInt32(0)
-    @key = buffer.readUInt32(4)
+    @pid = buffer.readUInt32BE(0)
+    @key = buffer.readUInt32BE(4)
 
 
 class BackendMessage.ParameterStatus extends BackendMessage
@@ -42,7 +42,7 @@ class BackendMessage.NotificationResponse extends BackendMessage
   typeId: 65 # A
 
   read: (buffer) ->
-    @pid = buffer.readUInt32(4)
+    @pid = buffer.readUInt32BE(4)
     @channel = buffer.readZeroTerminatedString(4)
     @payload = buffer.readZeroTerminatedString(@channel.length + 5)
 
@@ -55,24 +55,24 @@ class BackendMessage.RowDescription extends BackendMessage
   typeId: 84 # T
 
   read: (buffer) ->
-    numberOfFields = buffer.readUInt16(0)
+    numberOfFields = buffer.readUInt16BE(0)
     pos = 2
 
     @columns = []
     for i in [0 ... numberOfFields]
       name = buffer.readZeroTerminatedString(pos)
       pos += Buffer.byteLength(name) + 1
-      tableOID = buffer.readUInt32(pos)
+      tableOID = buffer.readUInt32BE(pos)
       pos += 4
-      tableFieldIndex = buffer.readUInt16(pos)
+      tableFieldIndex = buffer.readUInt16BE(pos)
       pos += 2
-      typeOID = buffer.readUInt32(pos)
+      typeOID = buffer.readUInt32BE(pos)
       pos += 4
-      size = buffer.readUInt16(pos)
+      size = buffer.readUInt16BE(pos)
       pos += 2
-      modifier = buffer.readUInt32(pos)
+      modifier = buffer.readUInt32BE(pos)
       pos += 4
-      formatCode = buffer.readUInt16(pos)
+      formatCode = buffer.readUInt16BE(pos)
       pos += 2
 
 
@@ -93,15 +93,15 @@ class BackendMessage.DataRow extends BackendMessage
   typeId: 68 # D
 
   read: (buffer) ->
-    numberOfFields = buffer.readUInt16(0)
+    numberOfFields = buffer.readUInt16BE(0)
     pos = 2
 
     @values = []
     for i in [0 ... numberOfFields]
-      length = buffer.readUInt32(pos)
+      length = buffer.readUInt32BE(pos)
       pos += 4
 
-      if length == -1
+      if length == 4294967295
         data = null
       else
         data = buffer.slice(pos, pos + length)
@@ -125,8 +125,8 @@ class BackendMessage.ParameterDescription extends BackendMessage
   typeId: 116 # t
 
   read: (buffer) ->
-    count = buffer.readUInt16(0)
-    @parameterTypes = (buffer.readUInt32(2 + i * 4) for i in [0 ... count])
+    count = buffer.readUInt16BE(0)
+    @parameterTypes = (buffer.readUInt32BE(2 + i * 4) for i in [0 ... count])
 
 
 class BackendMessage.ParseComplete extends BackendMessage
@@ -182,7 +182,7 @@ class BackendMessage.CopyInResponse extends BackendMessage
     @globalFormatType = buffer.readUInt8(0)
     @fieldFormatTypes = []
 
-    numberOfFields = buffer.readUInt16(1)
+    numberOfFields = buffer.readUInt16BE(1)
     pos = 3
     for i in [0 ... numberOfFields]
       @fieldFormatTypes.push buffer.readUInt8(pos)
