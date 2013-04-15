@@ -2,7 +2,7 @@
 print = (data) -> console.log data.toString().trim()
 
 task 'build', ->
-  exec 'mkdir -p lib && coffee -c -o lib src'
+  exec 'mkdir -p lib && coffee -c -o --bare lib src'
 
 task 'clean', ->
   exec 'rm -rf lib'
