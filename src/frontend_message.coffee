@@ -28,7 +28,7 @@ class FrontendMessage
     else
       pos = 0
 
-    messageBuffer.writeUInt32(payloadBuffer.length + 4, pos)
+    messageBuffer.writeUInt32BE(payloadBuffer.length + 4, pos)
     payloadBuffer.copy(messageBuffer, pos + 4)
 
     return messageBuffer
@@ -43,7 +43,7 @@ class FrontendMessage.Startup extends FrontendMessage
   payload: ->
     pos = 0
     pl = new Buffer(8192)
-    pl.writeUInt32(@protocol, pos)
+    pl.writeUInt32BE(@protocol, pos)
     pos += 4
 
     if @user
@@ -69,7 +69,7 @@ class FrontendMessage.SSLRequest extends FrontendMessage
 
   payload: ->
     pl = new Buffer(4)
-    pl.writeUInt32(@sslMagicNumber, 0)
+    pl.writeUInt32BE(@sslMagicNumber, 0)
     return pl
 
 class FrontendMessage.Password extends FrontendMessage
@@ -102,9 +102,9 @@ class FrontendMessage.CancelRequest extends FrontendMessage
 
   payload: ->
     b = new Buffer(12)
-    b.writeUInt32(@cancelRequestMagicNumber, 0)
-    b.writeUInt32(@backendPid, 4)
-    b.writeUInt32(@backendKey, 8)
+    b.writeUInt32BE(@cancelRequestMagicNumber, 0)
+    b.writeUInt32BE(@backendPid, 4)
+    b.writeUInt32BE(@backendKey, 8)
     return b
 
 class FrontendMessage.Close extends FrontendMessage
@@ -152,7 +152,7 @@ class FrontendMessage.Execute extends FrontendMessage
   payload: ->
     b = new Buffer(5 + @portal.length)
     pos = b.writeZeroTerminatedString(@portal, 0)
-    b.writeUInt32(@maxRows, pos)
+    b.writeUInt32BE(@maxRows, pos)
     return b
 
 
@@ -176,10 +176,10 @@ class FrontendMessage.Parse extends FrontendMessage
     pos  = b.writeZeroTerminatedString(@name, 0)
     pos += b.writeZeroTerminatedString(@sql, pos)
 
-    b.writeUInt16(@parameterTypes.length, pos)
+    b.writeUInt16BE(@parameterTypes.length, pos)
     pos += 2
     for paramType in @parameterTypes
-      b.writeUInt32(paramType, pos)
+      b.writeUInt32BE(paramType, pos)
       pos += 4
 
     return b.slice(0, pos)
@@ -199,12 +199,12 @@ class FrontendMessage.Bind extends FrontendMessage
 
     pos += b.writeZeroTerminatedString(@portal, pos)
     pos += b.writeZeroTerminatedString(@preparedStatement, pos)
-    b.writeUInt16(0x00, pos) # encode values using text
-    b.writeUInt16(@parameterValues.length, pos + 2)
+    b.writeUInt16BE(0x00, pos) # encode values using text
+    b.writeUInt16BE(@parameterValues.length, pos + 2)
     pos += 4
 
     for value in @parameterValues
-      b.writeUInt32(value.length, pos)
+      b.writeUInt32BE(value.length, pos)
       pos += 4
       pos += b.write(value, pos)
 
