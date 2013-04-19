@@ -19,17 +19,17 @@ else
   query = (sql, callback) ->
     connection.query(sql, callback)
     undefined
-  
+
 
   vow = vows.describe('Query')
 
   vow.addBatch
     "Running a simple SELECT query":
       topic: -> query("SELECT NULL AS field, 1, 1.1, 'String', TRUE, FALSE", @callback)
-    
+
       "it should not have an error message": (err, _) ->
         assert.equal err, null
-      
+
       "it should return fields": (err, resultset) ->
         assert.equal resultset.fields.length, 6
         assert.equal resultset.fields[0].name, "field"
@@ -38,57 +38,57 @@ else
         assert.equal resultset.fields[3].type, "string"
         assert.equal resultset.fields[4].type, "boolean"
         assert.equal resultset.fields[5].type, "boolean"
-    
+
       "it should return rows": (err, resultset) ->
         assert.equal resultset.rows.length, 1
         assert.deepEqual resultset.rows[0], [null, 1, 1.1, 'String', true, false]
-    
+
       "it should return SELECT as status": (err, resultset) ->
         assert.equal resultset.status, "SELECT"
-    
+
       "results should be JSON.stringifyp-able": (err, resultset) ->
         assert.doesNotThrow -> JSON.stringify(err)
         assert.doesNotThrow -> JSON.stringify(resultset)
-    
+
     "Dealing with dates and times":
       topic: -> query("SELECT '2010-01-01'::date, '2010-01-01 12:30:00'::timestamp, '30 DAY'::interval, '04:05:06'::time", @callback)
-    
+
       "it should not have an error message": (err, _) ->
         assert.equal err, null
-    
+
       "it should return a resultset instance": (err, resultset) ->
         assert.ok resultset instanceof Vertica.Resultset
-    
+
       "it should return fields": (err, resultset) ->
         assert.equal resultset.fields.length, 4
         assert.equal resultset.fields[0].type, "date"
         assert.equal resultset.fields[1].type, "timestamp"
         assert.equal resultset.fields[2].type, "interval"
         assert.equal resultset.fields[3].type, "time"
-        
+
       "it should return rows": (err, resultset) ->
         assert.equal resultset.rows.length, 1
         assert.deepEqual resultset.rows[0], [new Vertica.Date(2010,1,1), new Date(Date.UTC(2010, 0, 1, 12, 30, 0)), new Vertica.Interval(30), new Vertica.Time(4,5,6)]
-      
+
       "results should be JSON.stringify-able": (err, resultset) ->
         assert.doesNotThrow -> JSON.stringify(err)
         assert.doesNotThrow -> JSON.stringify(resultset)
-    
+
     "Running an empty query":
       topic: -> query(" ", @callback)
       "it should have an error message": (err, _) ->
         assert.equal err, 'The query was empty!'
-    
+
     "Running a second query after anempty query in the callback":
       topic: -> query " ", => query("SELECT 1", @callback)
       "it should return the value of the second query": (err, resultset) ->
         assert.equal resultset.theValue(), 1
-    
+
     "Running an invalid query":
       topic: -> query("FAIL", @callback)
       "it should have an error message": (err, _) ->
         assert.ok typeof err, 'string'
-    
+
     "Running a second query after a failed query in the callback":
       topic: -> query "FAIL", => query("SELECT 1", @callback)
       "it should return the value of the second query": (err, resultset) ->
@@ -96,15 +96,27 @@ else
 
     "Running a weird internal functions":
       topic: -> query("SELECT DISPLAY_LICENSE()", @callback)
-      
+
       "it should not have an error message": (err, _) ->
         assert.equal err, null
-    
+
       "it should return a resultset instance": (_, resultset) ->
         assert.ok resultset instanceof Vertica.Resultset
-    
+
       "it should return a string": (_, resultset) ->
         assert.ok typeof resultset.theValue()  == 'string'
+
+    "Running a system query":
+      topic: -> query("SELECT * FROM SYSTEM_TABLES", @callback)
+
+      "it should not have an error message": (err, _) ->
+        assert.equal err, null
+
+      "it should return a resultset instance": (_, resultset) ->
+        assert.ok resultset instanceof Vertica.Resultset
+
+      "it should not be empty": (_, resultset) ->
+        assert.ok resultset.rows.length > 0
 
 
   vow.export(module)
