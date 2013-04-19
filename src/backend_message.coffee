@@ -88,6 +88,9 @@ class BackendMessage.RowDescription extends BackendMessage
 
       @columns.push fieldDescriptor
 
+    # explicit return to avoid coffeescript generating result array
+    return undefined
+
 
 class BackendMessage.DataRow extends BackendMessage
   typeId: 68 # D
@@ -108,6 +111,9 @@ class BackendMessage.DataRow extends BackendMessage
         pos += length
 
       @values.push(data)
+
+    # explicit return to avoid coffeescript generating result array
+    return undefined
 
 
 class BackendMessage.CommandComplete extends BackendMessage
@@ -187,6 +193,9 @@ class BackendMessage.CopyInResponse extends BackendMessage
     for i in [0 ... numberOfFields]
       @fieldFormatTypes.push buffer.readUInt8(pos)
       pos += 1
+
+    # explicit return to avoid coffeescript generating result array
+    return undefined
 
 
 ##############################################################

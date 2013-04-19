@@ -203,7 +203,7 @@ class Connection extends EventEmitter
      # start at 1 to skip the message ID
     while @incomingData.length >= 5
       size = @incomingData.readUInt32BE(1)
-  
+
       if size + 1 <= @incomingData.length
         # parse message
         message = BackendMessage.fromBuffer(@incomingData.slice(0, size + 1))
@@ -213,8 +213,13 @@ class Connection extends EventEmitter
 
         # update loop variables
         @incomingData = @incomingData.slice(size + 1)
+      else
+        # message fragmented, keep collecting
+        break
 
-  
+    # explicit return to avoid coffeescript generating result array
+    return undefined
+
   _onClose: (error)->
     @currentJob.onConnectionError("The connection was closed.") if @currentJob
     @connected = false
