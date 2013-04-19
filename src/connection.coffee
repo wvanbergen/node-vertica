@@ -218,7 +218,7 @@ class Connection extends EventEmitter
         break
 
     # explicit return to avoid coffeescript generating result array
-    return undefined
+    undefined
 
   _onClose: (error)->
     @currentJob.onConnectionError("The connection was closed.") if @currentJob

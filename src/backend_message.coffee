@@ -89,7 +89,7 @@ class BackendMessage.RowDescription extends BackendMessage
       @columns.push fieldDescriptor
 
     # explicit return to avoid coffeescript generating result array
-    return undefined
+    undefined
 
 
 class BackendMessage.DataRow extends BackendMessage
@@ -113,7 +113,7 @@ class BackendMessage.DataRow extends BackendMessage
       @values.push(data)
 
     # explicit return to avoid coffeescript generating result array
-    return undefined
+    undefined
 
 
 class BackendMessage.CommandComplete extends BackendMessage
