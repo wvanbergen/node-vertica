@@ -1,6 +1,6 @@
 {
   "name": "vertica",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Pure Javascript client library for Vertica",
   "keywords": ["database", "vertica", "sql"],
   "author": "Willem van Bergen <willem@railsdoctors.com>",
@@ -14,7 +14,7 @@
     {
       "name": "Willem van Bergen",
       "email": "willem@railsdoctors.com",
-      "web": "http://www.vanbergen.org" 
+      "web": "http://www.vanbergen.org"
     }
   ],
   "devDependencies": {
