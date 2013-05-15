@@ -80,15 +80,19 @@ class FrontendMessage.Password extends FrontendMessage
     @authMethod ?= Authentication.methods.CLEARTEXT_PASSWORD
     @options    ?= {}
 
-  md5: (str) ->
+  md5: (values...) ->
     hash = require('crypto').createHash('md5')
-    hash.update(str)
+    for value in values
+      hash.update(value)
     hash.digest('hex')
 
   encodedPassword: ->
     switch @authMethod
       when Authentication.methods.CLEARTEXT_PASSWORD then @password
-      when Authentication.methods.MD5_PASSWORD then "md5" + @md5(@md5(@password + @options.user) + @options.salt)
+      when Authentication.methods.MD5_PASSWORD
+        salt = new Buffer(4)
+        salt.writeUInt32BE(@options.salt, 0)
+        "md5" + @md5(@md5(@password, @options.user), salt)
       else throw new Error("Authentication method #{@authMethod} not implemented.")
 
   payload: ->
