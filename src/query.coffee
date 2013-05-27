@@ -33,7 +33,7 @@ class Query extends EventEmitter
 
     @fields = []
     for column in msg.columns
-      field = new Query.Field(column)
+      field = new Query.Field(column, @connection.connectionOptions.decoders)
       @emit 'field', field
       @fields.push field
 
@@ -141,7 +141,7 @@ class Query extends EventEmitter
     @connection.removeListener 'CopyInResponse',     @onCopyInResponseListener
 
 class Query.Field
-  constructor: (msg) ->
+  constructor: (msg, customDecoders) ->
     @name            = msg.name
     @tableOID        = msg.tableOID
     @tableFieldIndex = msg.tableFieldIndex
@@ -151,7 +151,11 @@ class Query.Field
     @modifier        = msg.modifier
     @formatCode      = msg.formatCode
 
-    @decoder = decoders[@formatCode][@type] || decoders[@formatCode].default
+    if customDecoders
+      # custom decoders have precedence
+      decoder = customDecoders[@type] || customDecoders.default
+
+    @decoder = decoder || decoders[@formatCode][@type] || decoders[@formatCode].default
 
 
 module.exports = Query
