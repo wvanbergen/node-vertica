@@ -8,7 +8,6 @@ class Query extends EventEmitter
   constructor: (@connection, @sql, @callback) ->
     @_handlingCopyIn = false
 
-
   run: () ->
     @emit 'start'
 
@@ -31,9 +30,18 @@ class Query extends EventEmitter
   onRowDescription: (msg) ->
     throw "Cannot handle multi-queries with a callback!" if @callback? && @status?
 
+    # custom decoders may override the default buffer decoders
+    customDecoders = {}
+    for type, decoder of @connection.connectionOptions.decoders
+      # use any connection specific decoders
+      customDecoders[type] = decoder
+    for type, decoder of @decoders
+      # query specific decoders take precedence over all other decoders
+      customDecoders[type] = decoder
+
     @fields = []
     for column in msg.columns
-      field = new Query.Field(column)
+      field = new Query.Field(column, customDecoders)
       @emit 'field', field
       @fields.push field
 
@@ -141,7 +149,7 @@ class Query extends EventEmitter
     @connection.removeListener 'CopyInResponse',     @onCopyInResponseListener
 
 class Query.Field
-  constructor: (msg) ->
+  constructor: (msg, customDecoders) ->
     @name            = msg.name
     @tableOID        = msg.tableOID
     @tableFieldIndex = msg.tableFieldIndex
@@ -151,7 +159,11 @@ class Query.Field
     @modifier        = msg.modifier
     @formatCode      = msg.formatCode
 
-    @decoder = decoders[@formatCode][@type] || decoders[@formatCode].default
+    if customDecoders
+      # custom decoders have precedence
+      decoder = customDecoders[@type] || customDecoders.default
+
+    @decoder = decoder || decoders[@formatCode][@type] || decoders[@formatCode].default
 
 
 module.exports = Query
