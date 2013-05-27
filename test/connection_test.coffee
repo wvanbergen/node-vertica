@@ -41,7 +41,7 @@ else
     "it should return an error if the connection attempt fails":
       topic: -> connect(password: 'absolute_nonsense', @callback)
 
-      "it should not have an error message": (err, _) ->
+      "it should have an error message": (err, _) ->
         assert.ok err?, "Connecting should fail with a wrong password."
 
     "it should use SSL if requested":
