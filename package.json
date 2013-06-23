@@ -14,11 +14,12 @@
     {
       "name": "Willem van Bergen",
       "email": "willem@railsdoctors.com",
-      "web": "http://www.vanbergen.org" 
+      "web": "http://www.vanbergen.org"
     }
   ],
   "devDependencies": {
     "coffee-script": "~> 1.6.2",
+    "benchtable": "~> 0.0.2",
     "vows": "~> 0.7.0"
   },
   "repository": {
