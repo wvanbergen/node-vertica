@@ -10,7 +10,7 @@ A pure javascript library to connect to a Vertica database. Except that it is wr
 
 ### Connecting
 
-Call the `connect` method with a connection options object. The following connection 
+Call the `connect` method with a connection options object. The following connection
 options are supported.
 
 - `host`: the host to connect to (default: `"localhost"`)
@@ -23,13 +23,14 @@ options are supported.
     - `false`: no SSL
     - `"optional"`: use SSL if the server supports it, but fall back to no SSL if not (default).
     - `"required"`: use SSL, throw an error if the server doesn't support it.
-    - `"verified"`: use SSL, throw an error if the server doesn't support it or its SSL 
+    - `"verified"`: use SSL, throw an error if the server doesn't support it or its SSL
       certificate could not be verified.
 - `role`: Runs a `SET ROLE` query to activate a role for the user immediately after connecting.
-- `searchPath`: Runs a `SET SEARCH_PATH TO` query to set the search path after connecting. 
+- `searchPath`: Runs a `SET SEARCH_PATH TO` query to set the search path after connecting.
 - `timezone`: Runs a `SET TIMEZONE TO` query to set the connection's time zone after connecting.
-- `initializer`: a callback function that gets called after connection but before any query 
+- `initializer`: a callback function that gets called after connection but before any query
   gets executed.
+- `decoders`: an object containing custom buffer decoders for query result field deserialization, see usage in custom decoders test.
 
 ```coffeescript
 
@@ -40,17 +41,17 @@ connection = Vertica.connect host: 'localhost', user: "me", password: 'secret', 
 
 *Note:* the `connect` will establish a single connection. A connection can only execute
 one query at the time. Due to the evented nature of node.js, it is possible to start a new
-query while another query is still running. This library implements a simple queueing 
+query while another query is still running. This library implements a simple queueing
 system that will run queries serially.
 
 If you want parallelism, you will need multiple connections to your server. You can set up
 connection pooling fairly easily using the `generic-pool` library. Note that transactions
-cannot be shared between multiple connections; you need to use the same connection for all 
+cannot be shared between multiple connections; you need to use the same connection for all
 queries in the transaction and run them in serial.
 
 ### Querying (buffered)
 
-Running a buffered query will assemble the result in memory and call the callback 
+Running a buffered query will assemble the result in memory and call the callback
 function when it is completed.
 
 ```coffeescript
@@ -66,7 +67,7 @@ query.callback = (err, resultset) -> ...
 ```
 
 ### Querying (unbuffered)
- 
+
 Running an unbuffered query will immediately emit incoming data as events and
 will not store the result in memory. Recommended for handling huge resultsets.
 
