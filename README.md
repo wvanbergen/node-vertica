@@ -49,6 +49,15 @@ connection pooling fairly easily using the `generic-pool` library. Note that tra
 cannot be shared between multiple connections; you need to use the same connection for all
 queries in the transaction and run them in serial.
 
+#### Example Create Function for `generic-pool`
+```coffeescript
+pool = genericPool.Pool(
+  create: (callback) ->
+    vertica.connect {}, (err, conn) ->
+      callback err, conn
+)
+```
+
 ### Querying (buffered)
 
 Running a buffered query will assemble the result in memory and call the callback
