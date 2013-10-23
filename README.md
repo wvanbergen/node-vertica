@@ -51,12 +51,10 @@ queries in the transaction and run them in serial.
 
 #### Example Create Function for `generic-pool`
 ```coffeescript
-Vertica = undefined
-vertica.connect {}, (err, conn) ->
-  if err
-    errorCallback err
-  else
-    successCallback conn
+pool = genericPool.Pool(create: (callback) ->
+  vertica.connect {}, (err, conn) ->
+    callback err, conn
+)
 ```
 
 ### Querying (buffered)
