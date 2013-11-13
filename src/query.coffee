@@ -2,7 +2,6 @@ EventEmitter    = require('events').EventEmitter
 FrontendMessage = require('./frontend_message')
 decoders        = require('./types').decoders
 Resultset       = require('./resultset')
-stream          = require('stream')
 
 class Query extends EventEmitter
 
@@ -108,7 +107,9 @@ class Query extends EventEmitter
     else if @copyInSource == process.stdin # copy from STDIN
       process.stdin.resume()
       @_getStreamCopyInHandler(process.stdin)
-    else if @copyInSource instanceof stream.Readable # copy from stream
+
+    # if it looks like a stream... 
+    else if typeof @copyInSource is 'object' and typeof @copyInSource.read is 'function' and typeof @copyInSource.push is 'function'
       @_getStreamCopyInHandler(@copyInSource)
     else
       throw "No copy in handler defined to handle the COPY statement."
