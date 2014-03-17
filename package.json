@@ -18,8 +18,8 @@
     }
   ],
   "devDependencies": {
-    "coffee-script": "~> 1.6.2",
-    "vows": "~> 0.7.0"
+    "coffee-script": "~> 1.7.1",
+    "mocha": "~> 1.18.0"
   },
   "repository": {
     "type": "git",
@@ -34,6 +34,6 @@
   "engine": { "node" : ">= 0.8" },
   "scripts": {
     "prepublish": "cake clean && cake build",
-    "test": "vows test/*.coffee"
+    "test": "./node_modules/mocha/bin/mocha --compilers coffee:coffee-script/register test/**/*.coffee"
   }
 }
