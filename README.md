@@ -1,4 +1,4 @@
-# node-vertica
+# node-vertica [![Build Status](https://travis-ci.org/wvanbergen/node-vertica.png?branch=travis)](https://travis-ci.org/wvanbergen/node-vertica)
 
 A pure javascript library to connect to a Vertica database. Except that it is written in CoffeeScript.
 
