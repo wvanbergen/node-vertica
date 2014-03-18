@@ -1,8 +1,8 @@
 {
   "host": "localhost",
   "port": 5433,
-  "user": "username", 
-  "password": "password", 
-  "database": "database", 
-  "ssl": "optional"
+  "user": "dbadmin", 
+  "password": "dbadmin", 
+  "database": "ci", 
+  "ssl": false
 }

@@ -65,9 +65,9 @@ class Connection extends EventEmitter
         @_handshake()
 
   _bindEventListeners: ->
-    @connection.on 'close',   @_onClose.bind(this)
-    @connection.on 'error',   @_onError.bind(this)
-    @connection.on 'timeout', @_onTimeout.bind(this)
+    @connection.once 'close',   @_onClose.bind(this)
+    @connection.once 'error',   @_onError.bind(this)
+    @connection.once 'timeout', @_onTimeout.bind(this)
 
   disconnect: ->
     @_writeMessage(new FrontendMessage.Terminate())
@@ -220,17 +220,21 @@ class Connection extends EventEmitter
     # explicit return to avoid coffeescript generating result array
     undefined
 
-  _onClose: (error)->
+  _onClose: () ->
     @currentJob.onConnectionError("The connection was closed.") if @currentJob
+    @currentJob = false
     @connected = false
-    @emit 'close', error
+    @emit 'close'
 
   _onTimeout: () ->
-    @currentJob.onConnectionError("The connection timed out closed.") if @currentJob
+    @currentJob.onConnectionError("The connection timed out.") if @currentJob
+    @currentJob = false
     @emit 'timeout'
 
-  _onError: (exception) ->
-    @emit 'error', exception
+  _onError: (err) ->
+    @currentJob.onConnectionError(err.message) if @currentJob
+    @currentJob = false
+    @emit 'error', err
 
   _writeMessage: (msg, callback) ->
     console.log '=>', msg.__proto__.constructor.name, msg if @debug
