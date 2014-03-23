@@ -42,7 +42,7 @@ describe 'Vertica.connect', ->
     connectionInfo.password = 'absolute_nonsense'
     Vertica.connect connectionInfo, (err, _) ->
       assert err instanceof errors.AuthenticationError
-      assert.equal err.code, '0'
+      assert.equal err.code, '28000'
       done()
 
 
