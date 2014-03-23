@@ -2,6 +2,7 @@ path    = require 'path'
 fs      = require 'fs'
 assert  = require 'assert'
 Vertica = require '../../src/vertica'
+errors  = require '../../src/errors'
 
 describe 'Vertica.connect', ->
   connectionInfo = null
@@ -39,8 +40,9 @@ describe 'Vertica.connect', ->
 
   it "should return an error if the connection attempt fails", (done) ->
     connectionInfo.password = 'absolute_nonsense'
-    Vertica.connect connectionInfo, (err, connection) ->
-      assert.ok err?, "Connecting should fail with a wrong password"
+    Vertica.connect connectionInfo, (err, _) ->
+      assert err instanceof errors.AuthenticationError
+      assert.equal err.code, '28000'
       done()
 
 
@@ -65,5 +67,6 @@ describe 'Vertica.connect', ->
 
       setTimeout connection.interruptSession.bind(connection), 100
       connection.query "SELECT sleep(10)", (err, resultset) ->
-        assert.equal err, 'The connection was closed.'
+        assert err instanceof errors.ConnectionError
+        assert.equal err.message, 'The connection was closed.'
         done()

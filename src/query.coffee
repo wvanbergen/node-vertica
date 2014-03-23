@@ -2,6 +2,7 @@ EventEmitter    = require('events').EventEmitter
 FrontendMessage = require('./frontend_message')
 decoders        = require('./types').decoders
 Resultset       = require('./resultset')
+errors          = require('./errors')
 
 class Query extends EventEmitter
 
@@ -21,14 +22,15 @@ class Query extends EventEmitter
     @connection.once 'ReadyForQuery',      @onReadyForQueryListener   = @onReadyForQuery.bind(this)
     @connection.once 'CopyInResponse',     @onCopyInResponseListener  = @onCopyInResponse.bind(this)
 
-  onEmptyQuery: ->
+  onEmptyQuery: (msg) ->
+    err = new errors.QueryError("The query was empty!")
     if @callback
-      @error = "The query was empty!"
+      @error = err
     else
-      @emit 'error', "The query was empty!"
+      @emit 'error', err
 
   onRowDescription: (msg) ->
-    throw "Cannot handle multi-queries with a callback!" if @callback? && @status?
+    throw new errors.VerticaError("Cannot handle multi-queries with a callback!") if @callback? && @status?
 
     # custom decoders may override the default buffer decoders
     customDecoders = {}
@@ -70,10 +72,11 @@ class Query extends EventEmitter
     @emit 'end', msg.status
 
   onErrorResponse: (msg) ->
+    err = new errors.QueryErrorResponse(msg)
     if @callback
-      @error = msg
+      @error = err
     else
-      @emit 'error', msg.message
+      @emit 'error', err
 
   onConnectionError: (msg) ->
     @_removeAllListeners()
@@ -88,8 +91,12 @@ class Query extends EventEmitter
     successHandler = () => @copyDone()
     failureHandler = (err) => @copyFail(err)
 
-    copyInHandler = @_getCopyInHandler()
-    copyInHandler(dataHandler, successHandler, failureHandler)
+    try
+      copyInHandler = @_getCopyInHandler()
+      copyInHandler(dataHandler, successHandler, failureHandler)
+    catch err
+      @copyFail(err)
+
 
   _getCopyInHandler: ->
     if typeof @copyInSource == 'function'
@@ -102,7 +109,7 @@ class Query extends EventEmitter
         stream = fs.createReadStream(@copyInSource)
         @_getStreamCopyInHandler(stream)
       else
-        @copyFail("Could not find local file #{@dataSource}.")
+        throw new errors.ClientStateError("Could not find local file #{@copyInSource}.")
 
     else if @copyInSource == process.stdin # copy from STDIN
       process.stdin.resume()
@@ -112,7 +119,7 @@ class Query extends EventEmitter
     else if typeof @copyInSource is 'object' and typeof @copyInSource.read is 'function' and typeof @copyInSource.push is 'function'
       @_getStreamCopyInHandler(@copyInSource)
     else
-      throw "No copy in handler defined to handle the COPY statement."
+      throw new errors.ClientStateError("No copy in handler defined to handle the COPY statement.")
 
 
   _getStreamCopyInHandler: (stream) ->
@@ -126,21 +133,22 @@ class Query extends EventEmitter
     if @_handlingCopyIn
       @connection._writeMessage(new FrontendMessage.CopyData(data))
     else
-      throw "Copy in mode not active!"
+      throw new errors.ClientStateError("Copy in mode not active!")
 
   copyDone: () ->
     if @_handlingCopyIn
       @connection._writeMessage(new FrontendMessage.CopyDone())
       @_handlingCopyIn = false
     else
-      throw "Copy in mode not active!"
+      throw new errors.ClientStateError("Copy in mode not active!")
 
   copyFail: (error) ->
     if @_handlingCopyIn
-      @connection._writeMessage(new FrontendMessage.CopyFail(error.toString()))
+      message = error.message ? error.toString()
+      @connection._writeMessage(new FrontendMessage.CopyFail(message))
       @_handlingCopyIn = false
     else
-      throw "Copy in mode not active!"
+      throw new errors.ClientStateError("Copy in mode not active!")
 
   _removeAllListeners: () ->
     @connection.removeListener 'EmptyQueryResponse', @onEmptyQueryListener

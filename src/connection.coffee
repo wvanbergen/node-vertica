@@ -6,6 +6,7 @@ FrontendMessage = require('./frontend_message')
 BackendMessage  = require('./backend_message')
 Authentication  = require('./authentication')
 Query           = require('./query')
+errors          = require('./errors')
 
 class Connection extends EventEmitter
 
@@ -48,8 +49,8 @@ class Connection extends EventEmitter
               if !conn.authorized && @connectionOptions.ssl == 'verified'
                 conn.end()
                 @disconnect()
-                err = new Error(conn.authorizationError)
-                if @connectedCallback then @connectedCallback(err.message) else @emit 'error', err
+                err = new errors.SSLError(conn.authorizationError)
+                if @connectedCallback then @connectedCallback(err) else @emit 'error', err
               else
                 @emit 'warn', conn.authorizationError unless conn.authorized
                 @connection = conn
@@ -58,8 +59,8 @@ class Connection extends EventEmitter
           else if @connectionOptions.ssl == "optional"
             @_handshake()
           else
-            err = new Error("The server does not support SSL connection")
-            if @connectedCallback then @connectedCallback(err.message) else @emit 'error', err
+            err = new errors.SSLError("The server does not support SSL connection")
+            if @connectedCallback then @connectedCallback(err) else @emit 'error', err
 
       else
         @_handshake()
@@ -86,8 +87,8 @@ class Connection extends EventEmitter
     return job
 
   _runJob: (job) ->
-    throw "Connection is closed" unless @connected
-    throw "Connection is busy" if @busy
+    throw new errors.ClientStateError("Connection is closed") unless @connected
+    throw new errors.ClientStateError("Connection is busy") if @busy
 
     @busy = true
     @currentJob = job
@@ -113,7 +114,8 @@ class Connection extends EventEmitter
 
   _handshake: ->
     authenticationFailureHandler = (err) =>
-      if @connectedCallback then @connectedCallback(err.message) else @emit 'error', err
+      err = new errors.AuthenticationError(err)
+      if @connectedCallback then @connectedCallback(err) else @emit 'error', err
 
     authenticationHandler = (msg) =>
       switch msg.method
@@ -127,7 +129,7 @@ class Connection extends EventEmitter
           @once 'Authentication', authenticationHandler
 
         else
-          throw new Error("Autentication method #{msg.method} not supported.")
+          throw new errors.ClientStateError("Authentication method #{msg.method} not supported.")
 
     @connection.on 'data', @_onData.bind(this)
     @_writeMessage(new FrontendMessage.Startup(@connectionOptions.user, @connectionOptions.database))
@@ -221,18 +223,21 @@ class Connection extends EventEmitter
     undefined
 
   _onClose: () ->
-    @currentJob.onConnectionError("The connection was closed.") if @currentJob
+    error = new errors.ConnectionError("The connection was closed.")
+    @currentJob.onConnectionError(error) if @currentJob
     @currentJob = false
     @connected = false
     @emit 'close'
 
   _onTimeout: () ->
-    @currentJob.onConnectionError("The connection timed out.") if @currentJob
+    error = new errors.ConnectionError("The connection timed out.")
+    @currentJob.onConnectionError(error) if @currentJob
     @currentJob = false
     @emit 'timeout'
 
   _onError: (err) ->
-    @currentJob.onConnectionError(err.message) if @currentJob
+    error = new errors.ConnectionError(err.message ? err.toString())
+    @currentJob.onConnectionError(error) if @currentJob
     @currentJob = false
     @emit 'error', err
 
@@ -250,11 +255,11 @@ class Connection extends EventEmitter
       bareClient = new Connection(bareConnectionOptions)
       bareClient.connect(cb)
     else
-      cb("Cannot interrupt connection! It's not initialized as interruptible.", null)
+      cb(new errors.ClientStateError("Cannot interrupt connection! It's not initialized as interruptible."), null)
 
   _success: (err, cb) ->
     if err?
-      if cb? then cb(err) else @emit 'error', new Error(err)
+      if cb? then cb(err) else @emit 'error', err
       return false
     else
       return true

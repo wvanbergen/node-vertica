@@ -19,7 +19,8 @@
   ],
   "devDependencies": {
     "coffee-script": "~> 1.7.1",
-    "mocha": "~> 1.18.0"
+    "mocha": "~> 1.18.0",
+    "semver": "~> 2.2"
   },
   "repository": {
     "type": "git",
