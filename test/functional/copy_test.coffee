@@ -105,7 +105,7 @@ describe 'Vertica.Connection#copy', ->
     connection.copy copySQL, copyFile, (err, _) ->
       return done("Copy error expected") unless err?
       assert.equal err.information['Code'], "08000"
-      assert.equal err.information['Message'], "COPY: from stdin failed: Error: Could not find local file ./test/nonexisting.csv."
+      assert.equal err.information['Message'], "COPY: from stdin failed: Could not find local file ./test/nonexisting.csv."
       done()
 
 
@@ -132,7 +132,7 @@ describe 'Vertica.Connection#copy', ->
     connection.query copySQL, (err, _) ->
       return done("Copy error expected") unless err?
       assert.equal err.information['Code'], '08000'
-      assert.equal err.information['Message'], 'COPY: from stdin failed: Error: No copy in handler defined to handle the COPY statement.'
+      assert.equal err.information['Message'], 'COPY: from stdin failed: No copy in handler defined to handle the COPY statement.'
       done()
 
 
@@ -144,5 +144,5 @@ describe 'Vertica.Connection#copy', ->
     connection.copy copySQL, dataHandler, (err, _) ->
       return done("Copy error expected") unless err?
       assert.equal err.information['Code'], "08000"
-      assert.equal err.information['Message'], "COPY: from stdin failed: Error: Shit hits the fan!"
+      assert.equal err.information['Message'], "COPY: from stdin failed: Shit hits the fan!"
       done()

@@ -141,7 +141,8 @@ class Query extends EventEmitter
 
   copyFail: (error) ->
     if @_handlingCopyIn
-      @connection._writeMessage(new FrontendMessage.CopyFail(error.toString()))
+      message = error.message ? error.toString()
+      @connection._writeMessage(new FrontendMessage.CopyFail(message))
       @_handlingCopyIn = false
     else
       throw new Error("Copy in mode not active!")
