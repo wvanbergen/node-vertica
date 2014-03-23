@@ -6,12 +6,15 @@ Vertica = require('../../src/vertica')
 describe 'Vertica.Connection#query', ->
   connection = null
 
-
   before (done) ->
     if !fs.existsSync('./test/connection.json')
       done("Create test/connection.json to run functional tests")
     else
       connection = Vertica.connect JSON.parse(fs.readFileSync('./test/connection.json')), done
+
+
+  after ->
+    connection.disconnect() if connection.connected
 
 
   describe "Simple SELECT query", ->
