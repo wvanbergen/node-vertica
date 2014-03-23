@@ -12,5 +12,8 @@ class Resultset
   getLength: ->
     @rows.length
 
+  isEmpty: ->
+    @rows.length == 0
+
 
 module.exports = Resultset
