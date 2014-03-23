@@ -43,11 +43,7 @@ describe 'Vertica.Connection#copy', ->
       verifySQL = "SELECT * FROM test_node_vertica_table ORDER BY id"
       connection.query verifySQL, (err, resultset) ->
         return done(err) if err?
-
-        assert.equal resultset.getLength(), 3
-        assert.deepEqual resultset.rows[0], [11, "Stuff"]
-        assert.deepEqual resultset.rows[1], [12, "More stuff"]
-        assert.deepEqual resultset.rows[2], [13, "Final stuff"]
+        assert.deepEqual resultset.rows, [[11, "Stuff"], [12, "More stuff"], [13, "Final stuff"]]
         done()      
 
 
@@ -65,11 +61,21 @@ describe 'Vertica.Connection#copy', ->
       verifySQL = "SELECT * FROM test_node_vertica_table ORDER BY id"
       connection.query verifySQL, (err, resultset) ->
         return done(err) if err?
+        assert.deepEqual resultset.rows, [[11, "Stuff"], [12, "More stuff"], [13, "Final stuff"]]
+        done()
 
-        assert.equal resultset.getLength(), 3
-        assert.deepEqual resultset.rows[0], [11, "Stuff"]
-        assert.deepEqual resultset.rows[1], [12, "More stuff"]
-        assert.deepEqual resultset.rows[2], [13, "Final stuff"]
+
+  it "should COPY data from a stream function", (done) ->
+    stream = fs.createReadStream("./test/test_node_vertica_table.csv");
+    copySQL = "COPY test_node_vertica_table FROM STDIN ABORT ON ERROR"
+    connection.copy copySQL, stream, (err, _) ->
+      stream.close()
+      return done(err) if err?
+      
+      verifySQL = "SELECT * FROM test_node_vertica_table ORDER BY id"
+      connection.query verifySQL, (err, resultset) ->
+        return done(err) if err?
+        assert.deepEqual resultset.rows, [[11, "Stuff"], [12, "More stuff"], [13, "Final stuff"]]
         done()
 
 
