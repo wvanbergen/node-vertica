@@ -109,7 +109,7 @@ class Query extends EventEmitter
         stream = fs.createReadStream(@copyInSource)
         @_getStreamCopyInHandler(stream)
       else
-        throw new errors.CopyDataError("Could not find local file #{@copyInSource}.")
+        throw new errors.ClientStateError("Could not find local file #{@copyInSource}.")
 
     else if @copyInSource == process.stdin # copy from STDIN
       process.stdin.resume()
@@ -119,7 +119,7 @@ class Query extends EventEmitter
     else if typeof @copyInSource is 'object' and typeof @copyInSource.read is 'function' and typeof @copyInSource.push is 'function'
       @_getStreamCopyInHandler(@copyInSource)
     else
-      throw new errors.CopyDataError("No copy in handler defined to handle the COPY statement.")
+      throw new errors.ClientStateError("No copy in handler defined to handle the COPY statement.")
 
 
   _getStreamCopyInHandler: (stream) ->
@@ -133,14 +133,14 @@ class Query extends EventEmitter
     if @_handlingCopyIn
       @connection._writeMessage(new FrontendMessage.CopyData(data))
     else
-      throw new errors.CopyDataError("Copy in mode not active!")
+      throw new errors.ClientStateError("Copy in mode not active!")
 
   copyDone: () ->
     if @_handlingCopyIn
       @connection._writeMessage(new FrontendMessage.CopyDone())
       @_handlingCopyIn = false
     else
-      throw new errors.CopyDataError("Copy in mode not active!")
+      throw new errors.ClientStateError("Copy in mode not active!")
 
   copyFail: (error) ->
     if @_handlingCopyIn
@@ -148,7 +148,7 @@ class Query extends EventEmitter
       @connection._writeMessage(new FrontendMessage.CopyFail(message))
       @_handlingCopyIn = false
     else
-      throw new errors.CopyDataError("Copy in mode not active!")
+      throw new errors.ClientStateError("Copy in mode not active!")
 
   _removeAllListeners: () ->
     @connection.removeListener 'EmptyQueryResponse', @onEmptyQueryListener
