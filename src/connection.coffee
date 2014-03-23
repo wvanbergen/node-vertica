@@ -114,7 +114,7 @@ class Connection extends EventEmitter
 
   _handshake: ->
     authenticationFailureHandler = (err) =>
-      err = new errors.AuthorizationError(err)
+      err = new errors.AuthenticationError(err)
       if @connectedCallback then @connectedCallback(err) else @emit 'error', err
 
     authenticationHandler = (msg) =>
