@@ -86,8 +86,8 @@ class Connection extends EventEmitter
     return job
 
   _runJob: (job) ->
-    throw "Connection is closed" unless @connected
-    throw "Connection is busy" if @busy
+    throw new Error("Connection is closed") unless @connected
+    throw new Error("Connection is busy") if @busy
 
     @busy = true
     @currentJob = job

@@ -28,7 +28,7 @@ class Query extends EventEmitter
       @emit 'error', "The query was empty!"
 
   onRowDescription: (msg) ->
-    throw "Cannot handle multi-queries with a callback!" if @callback? && @status?
+    throw new Error("Cannot handle multi-queries with a callback!") if @callback? && @status?
 
     # custom decoders may override the default buffer decoders
     customDecoders = {}

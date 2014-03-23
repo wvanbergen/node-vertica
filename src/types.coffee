@@ -49,7 +49,7 @@ VerticaDate.fromStringBuffer = (buffer) ->
   if matches = buffer.toString('ascii').match(/^(\d{4})-(\d{2})-(\d{2})$/)
     new VerticaDate(matches[1], matches[2], matches[3])
   else
-    throw 'Invalid date format!'
+    throw new Error('Invalid date format!')
 
 VerticaDate.fromDate = (date) ->
   new VerticaDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
@@ -75,7 +75,7 @@ VerticaTime.fromStringBuffer = (buffer) ->
   if matches = buffer.toString('ascii').match(/^(\d{2}):(\d{2}):(\d{2})$/)
     new VerticaTime(matches[1], matches[2], matches[3])
   else
-    throw 'Invalid time format!'
+    throw new Error('Invalid time format!')
 
 exports.Time = VerticaTime
 
@@ -103,7 +103,7 @@ VerticaTimestamp =
       new Date(utc)
 
     else
-      throw 'Invalid timestamp string returned'
+      throw new Error('Invalid timestamp string returned')
 
 
   setTimezoneOffset: (offset) ->
@@ -114,7 +114,7 @@ VerticaTimestamp =
       timezoneOffset = 0 - timezoneOffset if matches[1] == '-'
       VerticaTimestamp.timezoneOffset = timezoneOffset * 60 * 1000
     else
-      throw "Invalid timezone offset string: #{offset}!"
+      throw new Error("Invalid timezone offset string: #{offset}!")
 
 
 exports.Timestamp = VerticaTimestamp
@@ -154,14 +154,14 @@ class VerticaInterval
     days: @days, hours: @hours, minutes: @minutes, seconds: @seconds
   
   sqlQuoted: ->
-    throw 'Not yet implemented'
+    throw new Error('Not yet implemented')
 
 
 VerticaInterval.fromStringBuffer = (buffer) ->
   if matches = buffer.toString('ascii').match(/^(\d+)?\s?(?:(\d{2}):(\d{2})(?::(\d{2}(?:\.\d+)?))?)?$/)
     new VerticaInterval(matches[1], matches[2], matches[3], matches[4])
   else
-    throw 'Invalid interval format!'
+    throw new Error('Invalid interval format!')
 
 
 exports.Interval = VerticaInterval
@@ -185,7 +185,7 @@ stringDecoders =
 binaryDecoders =
   string:    (buffer) -> buffer.toString()
   integer:   (buffer) -> +buffer
-  default:   (buffer) -> throw 'Binary decoders not yet supported!'
+  default:   (buffer) -> throw new Error('Binary decoders not yet supported!')
 
 exports.decoders =
   0:        stringDecoders,
@@ -203,7 +203,7 @@ stringEncoders =
   default:   (value) -> value.toString()
 
 binaryEncoders =
-  default: (buffer) -> throw 'Binary encoders not yet supported!'
+  default: (buffer) -> throw new Error('Binary encoders not yet supported!')
 
 exports.encoders =
   0:        stringEncoders,
