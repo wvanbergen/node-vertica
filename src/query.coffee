@@ -88,8 +88,12 @@ class Query extends EventEmitter
     successHandler = () => @copyDone()
     failureHandler = (err) => @copyFail(err)
 
-    copyInHandler = @_getCopyInHandler()
-    copyInHandler(dataHandler, successHandler, failureHandler)
+    try
+      copyInHandler = @_getCopyInHandler()
+      copyInHandler(dataHandler, successHandler, failureHandler)
+    catch err
+      @copyFail(err)
+
 
   _getCopyInHandler: ->
     if typeof @copyInSource == 'function'
@@ -112,7 +116,7 @@ class Query extends EventEmitter
     else if typeof @copyInSource is 'object' and typeof @copyInSource.read is 'function' and typeof @copyInSource.push is 'function'
       @_getStreamCopyInHandler(@copyInSource)
     else
-      throw "No copy in handler defined to handle the COPY statement."
+      throw new Error("No copy in handler defined to handle the COPY statement.")
 
 
   _getStreamCopyInHandler: (stream) ->

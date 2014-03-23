@@ -105,5 +105,25 @@ describe 'Vertica.Connection#copy', ->
         return done(err) if err?
 
         assert.equal resultset.getLength(), 0
-        done()      
+        done()
 
+
+  it "should fail when not providing a data source", (done) ->
+    copySQL = "COPY test_node_vertica_table FROM STDIN ABORT ON ERROR"
+    connection.query copySQL, (err, _) ->
+      return done("Copy error expected") unless err?
+      assert.equal err.information['Code'], '08000'
+      assert.equal err.information['Message'], 'COPY: from stdin failed: Error: No copy in handler defined to handle the COPY statement.'
+      done()
+
+
+  it "should fail when throwing an error in the copy handler", (done) ->
+    dataHandler = (data, success, fail) ->
+      throw new Error("Shit hits the fan!")
+
+    copySQL = "COPY test_node_vertica_table FROM STDIN ABORT ON ERROR"
+    connection.copy copySQL, dataHandler, (err, _) ->
+      return done("Copy error expected") unless err?
+      assert.equal err.information['Code'], "08000"
+      assert.equal err.information['Message'], "COPY: from stdin failed: Error: Shit hits the fan!"
+      done()
