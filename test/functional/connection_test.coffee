@@ -40,8 +40,9 @@ describe 'Vertica.connect', ->
 
   it "should return an error if the connection attempt fails", (done) ->
     connectionInfo.password = 'absolute_nonsense'
-    Vertica.connect connectionInfo, (err, connection) ->
-      assert.ok err?, "Connecting should fail with a wrong password"
+    Vertica.connect connectionInfo, (err, _) ->
+      assert err instanceof errors.AuthenticationError
+      assert.equal err.code, '0'
       done()
 
 
