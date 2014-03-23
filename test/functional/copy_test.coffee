@@ -69,7 +69,6 @@ describe 'Vertica.Connection#copy', ->
     stream = fs.createReadStream("./test/test_node_vertica_table.csv");
     copySQL = "COPY test_node_vertica_table FROM STDIN ABORT ON ERROR"
     connection.copy copySQL, stream, (err, _) ->
-      stream.close()
       return done(err) if err?
       
       verifySQL = "SELECT * FROM test_node_vertica_table ORDER BY id"
