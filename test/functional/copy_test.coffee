@@ -64,18 +64,19 @@ describe 'Vertica.Connection#copy', ->
         assert.deepEqual resultset.rows, [[11, "Stuff"], [12, "More stuff"], [13, "Final stuff"]]
         done()
 
-
-  it "should COPY data from a stream function", (done) ->
-    stream = fs.createReadStream("./test/test_node_vertica_table.csv");
-    copySQL = "COPY test_node_vertica_table FROM STDIN ABORT ON ERROR"
-    connection.copy copySQL, stream, (err, _) ->
-      return done(err) if err?
-      
-      verifySQL = "SELECT * FROM test_node_vertica_table ORDER BY id"
-      connection.query verifySQL, (err, resultset) ->
+  if require('semver').gte(process.version, '0.10.0')
+    it "should COPY data from a stream function", (done) ->
+      stream = fs.createReadStream("./test/test_node_vertica_table.csv");
+      copySQL = "COPY test_node_vertica_table FROM STDIN ABORT ON ERROR"
+      connection.copy copySQL, stream, (err, _) ->
+        stream.close()
         return done(err) if err?
-        assert.deepEqual resultset.rows, [[11, "Stuff"], [12, "More stuff"], [13, "Final stuff"]]
-        done()
+
+        verifySQL = "SELECT * FROM test_node_vertica_table ORDER BY id"
+        connection.query verifySQL, (err, resultset) ->
+          return done(err) if err?
+          assert.deepEqual resultset.rows, [[11, "Stuff"], [12, "More stuff"], [13, "Final stuff"]]
+          done()
 
 
   it "should not load data if fail is called", (done) ->
