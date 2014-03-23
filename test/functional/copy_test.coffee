@@ -81,6 +81,9 @@ describe 'Vertica.Connection#copy', ->
 
   it "should not load data if fail is called", (done) ->
     dataHandler = (data, success, fail) ->
+      data("11|Stuff\r\n")
+      data("12|More stuff\n13|Fin")
+      data("al stuff\n")      
       fail("Sorry, not happening")
 
     copySQL = "COPY test_node_vertica_table FROM STDIN ABORT ON ERROR"
@@ -94,6 +97,16 @@ describe 'Vertica.Connection#copy', ->
         return done(err) if err?
         assert.equal resultset.getLength(), 0
         done()
+
+
+  it "should not load from a nonexisting file", (done) ->
+    copyFile = './test/nonexisting.csv'
+    copySQL = "COPY test_node_vertica_table FROM STDIN ABORT ON ERROR"
+    connection.copy copySQL, copyFile, (err, _) ->
+      return done("Copy error expected") unless err?
+      assert.equal err.information['Code'], "08000"
+      assert.equal err.information['Message'], "COPY: from stdin failed: Could not find local file ./test/nonexisting.csv."
+      done()
 
 
   it "should not load data if the input data is invalid", (done) ->
