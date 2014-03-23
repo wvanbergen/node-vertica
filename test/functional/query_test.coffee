@@ -2,6 +2,7 @@ path    = require 'path'
 fs      = require 'fs'
 assert  = require 'assert'
 Vertica = require('../../src/vertica')
+errors  = require('../../src/errors')
 
 describe 'Vertica.Connection#query', ->
   connection = null
@@ -82,7 +83,8 @@ describe 'Vertica.Connection#query', ->
   describe "Running an empty query", ->
     it "should return an error", (done) ->
       connection.query " ", (err, _) ->
-        assert.equal err, 'The query was empty!'
+        assert err instanceof errors.QueryError
+        assert.equal err.message, "The query was empty!"
         done()
 
     it "should return the result of the second query", (done) ->

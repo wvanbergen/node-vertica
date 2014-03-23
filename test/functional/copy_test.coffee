@@ -2,6 +2,7 @@ path    = require 'path'
 fs      = require 'fs'
 assert  = require 'assert'
 Vertica = require('../../src/vertica')
+errors  = require('../../src/errors')
 
 describe 'Vertica.Connection#copy', ->
   connection = null
@@ -89,8 +90,8 @@ describe 'Vertica.Connection#copy', ->
     copySQL = "COPY test_node_vertica_table FROM STDIN ABORT ON ERROR"
     connection.copy copySQL, dataHandler, (err, _) ->
       return done("Copy error expected") unless err?
-      assert.equal err.information['Code'], "08000"
-      assert.equal err.information['Message'], "COPY: from stdin failed: Sorry, not happening"
+      assert.equal err.code, "08000"
+      assert.equal err.message, "COPY: from stdin failed: Sorry, not happening"
       
       verifySQL = "SELECT * FROM test_node_vertica_table ORDER BY id"
       connection.query verifySQL, (err, resultset) ->
@@ -104,8 +105,9 @@ describe 'Vertica.Connection#copy', ->
     copySQL = "COPY test_node_vertica_table FROM STDIN ABORT ON ERROR"
     connection.copy copySQL, copyFile, (err, _) ->
       return done("Copy error expected") unless err?
-      assert.equal err.information['Code'], "08000"
-      assert.equal err.information['Message'], "COPY: from stdin failed: Could not find local file ./test/nonexisting.csv."
+      errors.Query
+      assert.equal err.code, "08000"
+      assert.equal err.message, "COPY: from stdin failed: Could not find local file ./test/nonexisting.csv."
       done()
 
 
@@ -117,7 +119,8 @@ describe 'Vertica.Connection#copy', ->
     copySQL = "COPY test_node_vertica_table FROM STDIN ABORT ON ERROR"
     connection.copy copySQL, dataHandler, (err, _) ->
       return done("Copy error expected") unless err?
-      assert.equal err.information['Code'], "22V04"
+      assert err instanceof errors.QueryError
+      assert.equal err.code, "22V04"
       
       verifySQL = "SELECT * FROM test_node_vertica_table ORDER BY id"
       connection.query verifySQL, (err, resultset) ->
@@ -131,8 +134,9 @@ describe 'Vertica.Connection#copy', ->
     copySQL = "COPY test_node_vertica_table FROM STDIN ABORT ON ERROR"
     connection.query copySQL, (err, _) ->
       return done("Copy error expected") unless err?
-      assert.equal err.information['Code'], '08000'
-      assert.equal err.information['Message'], 'COPY: from stdin failed: No copy in handler defined to handle the COPY statement.'
+      assert err instanceof errors.QueryError
+      assert.equal err.code, '08000'
+      assert.equal err.message, 'COPY: from stdin failed: No copy in handler defined to handle the COPY statement.'
       done()
 
 
@@ -143,6 +147,7 @@ describe 'Vertica.Connection#copy', ->
     copySQL = "COPY test_node_vertica_table FROM STDIN ABORT ON ERROR"
     connection.copy copySQL, dataHandler, (err, _) ->
       return done("Copy error expected") unless err?
-      assert.equal err.information['Code'], "08000"
-      assert.equal err.information['Message'], "COPY: from stdin failed: Shit hits the fan!"
+      assert err instanceof errors.QueryError
+      assert.equal err.code, "08000"
+      assert.equal err.message, "COPY: from stdin failed: Shit hits the fan!"
       done()
