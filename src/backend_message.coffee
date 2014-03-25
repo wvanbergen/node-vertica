@@ -181,6 +181,22 @@ class BackendMessage.ReadyForQuery extends BackendMessage
   read: (buffer) ->
     @transactionStatus = buffer.readUInt8(0)
 
+
+class BackendMessage.CopyFileResponse extends BackendMessage
+  typeId: 70 # F
+
+  read: (buffer) ->
+    @files = []
+    numberOfFiles = buffer.readUInt16BE(0)
+    pos = 2
+    for i in [0 ... numberOfFiles]
+      filename = buffer.readZeroTerminatedString(pos)
+      @files.push filename
+      pos += filename.length + 1
+
+    last = buffer.readUInt16BE(pos)
+
+
 class BackendMessage.CopyInResponse extends BackendMessage
   typeId: 71 # G
 

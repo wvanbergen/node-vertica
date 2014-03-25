@@ -33,6 +33,7 @@ describe 'Vertica.Connection#copy', ->
 
   afterEach ->
     connection.disconnect() if connection.connected
+    connection = null
 
 
   it "should COPY data from a file", (done) ->
@@ -105,7 +106,7 @@ describe 'Vertica.Connection#copy', ->
     copySQL = "COPY test_node_vertica_table FROM STDIN ABORT ON ERROR"
     connection.copy copySQL, copyFile, (err, _) ->
       return done("Copy error expected") unless err?
-      errors.Query
+      assert err instanceof errors.QueryError
       assert.equal err.code, "08000"
       assert.equal err.message, "COPY: from stdin failed: Could not find local file ./test/nonexisting.csv."
       done()
@@ -151,3 +152,15 @@ describe 'Vertica.Connection#copy', ->
       assert.equal err.code, "08000"
       assert.equal err.message, "COPY: from stdin failed: Shit hits the fan!"
       done()
+
+
+  it "should fail gracefully when using COPY FROM LOCAL", (done) ->
+    copyFile = "./test/test_node_vertica_table.csv"
+    copySQL  = "COPY test_node_vertica_table FROM LOCAL #{Vertica.quote(copyFile)} ABORT ON ERROR"
+
+    connection.once 'error', (err) ->
+      assert.equal err.message, 'COPY FROM LOCAL is not supported.'
+      done()
+
+    connection.query copySQL, (err, rs) ->
+      done("Copy error expected") unless err?

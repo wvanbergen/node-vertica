@@ -14,13 +14,15 @@ class Query extends EventEmitter
 
     @connection._writeMessage(new FrontendMessage.Query(@sql))
 
-    @connection.once 'EmptyQueryResponse', @onEmptyQueryListener      = @onEmptyQuery.bind(this)
-    @connection.on   'RowDescription',     @onRowDescriptionListener  = @onRowDescription.bind(this)
-    @connection.on   'DataRow',            @onDataRowListener         = @onDataRow.bind(this)
-    @connection.on   'CommandComplete',    @onCommandCompleteListener = @onCommandComplete.bind(this)
-    @connection.once 'ErrorResponse',      @onErrorResponseListener   = @onErrorResponse.bind(this)
-    @connection.once 'ReadyForQuery',      @onReadyForQueryListener   = @onReadyForQuery.bind(this)
-    @connection.once 'CopyInResponse',     @onCopyInResponseListener  = @onCopyInResponse.bind(this)
+    @connection.once 'EmptyQueryResponse', @onEmptyQueryListener       = @onEmptyQuery.bind(this)
+    @connection.on   'RowDescription',     @onRowDescriptionListener   = @onRowDescription.bind(this)
+    @connection.on   'DataRow',            @onDataRowListener          = @onDataRow.bind(this)
+    @connection.on   'CommandComplete',    @onCommandCompleteListener  = @onCommandComplete.bind(this)
+    @connection.once 'ErrorResponse',      @onErrorResponseListener    = @onErrorResponse.bind(this)
+    @connection.once 'ReadyForQuery',      @onReadyForQueryListener    = @onReadyForQuery.bind(this)
+    @connection.once 'CopyInResponse',     @onCopyInResponseListener   = @onCopyInResponse.bind(this)
+    @connection.once 'CopyFileResponse',   @onCopyFileResponseListener = @onCopyFileResponse.bind(this)
+
 
   onEmptyQuery: (msg) ->
     err = new errors.QueryError("The query was empty!")
@@ -85,11 +87,12 @@ class Query extends EventEmitter
     else
       @emit 'error', msg
 
+
   onCopyInResponse: (msg) ->
     @_handlingCopyIn = true
     dataHandler    = (data) => @copyData(data)
-    successHandler = () => @copyDone()
-    failureHandler = (err) => @copyFail(err)
+    successHandler = ()     => @copyDone()
+    failureHandler = (err)  => @copyFail(err)
 
     try
       copyInHandler = @_getCopyInHandler()
@@ -97,6 +100,11 @@ class Query extends EventEmitter
     catch err
       @copyFail(err)
 
+
+  onCopyFileResponse: (msg) ->
+    error = new errors.ClientStateError("COPY FROM LOCAL is not supported.")
+    @connection.disconnect(error)
+    
 
   _getCopyInHandler: ->
     if typeof @copyInSource == 'function'
@@ -158,6 +166,8 @@ class Query extends EventEmitter
     @connection.removeListener 'ErrorResponse',      @onErrorResponseListener
     @connection.removeListener 'ReadyForQuery',      @onReadyForQueryListener
     @connection.removeListener 'CopyInResponse',     @onCopyInResponseListener
+    @connection.removeListener 'CopyFileResponse',   @onCopyFileResponseListener
+
 
 class Query.Field
   constructor: (msg, customDecoders) ->

@@ -70,9 +70,11 @@ class Connection extends EventEmitter
     @connection.once 'error',   @_onError.bind(this)
     @connection.once 'timeout', @_onTimeout.bind(this)
 
-  disconnect: ->
-    @_writeMessage(new FrontendMessage.Terminate())
+  disconnect: (error) ->
+    @_onError(error) if error
+    @_writeMessage(new FrontendMessage.Terminate()) if @connection.connected
     @connection.end()
+
 
   isSSL: ->
     @connection.pair? && @connection.encrypted?
@@ -223,10 +225,10 @@ class Connection extends EventEmitter
     undefined
 
   _onClose: () ->
+    @connected = false
     error = new errors.ConnectionError("The connection was closed.")
     @currentJob.onConnectionError(error) if @currentJob
     @currentJob = false
-    @connected = false
     @emit 'close'
 
   _onTimeout: () ->
@@ -239,7 +241,7 @@ class Connection extends EventEmitter
     error = new errors.ConnectionError(err.message ? err.toString())
     @currentJob.onConnectionError(error) if @currentJob
     @currentJob = false
-    @emit 'error', err
+    @emit 'error', error
 
   _writeMessage: (msg, callback) ->
     console.log '=>', msg.__proto__.constructor.name, msg if @debug
