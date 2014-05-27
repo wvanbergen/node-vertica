@@ -26,19 +26,27 @@ class Connection extends EventEmitter
 
     @incomingData = new Buffer(0)
 
+  
   connect: (callback) ->
-    @connectedCallback = callback
+    connectionStatusReported = false
+
+    @_connectedCallback = (err) => 
+      if !connectionStatusReported
+        if err?
+          if callback then callback(err) else @emit 'error', err
+        else
+          callback(null, this) if callback
+
+      connectionStatusReported = true
+
     @connection = net.createConnection @connectionOptions.port, @connectionOptions.host
 
-    initialErrorHandler = (err) =>
-      if @connectedCallback then @connectedCallback(err.message) else @emit 'error', err
-
-    @connection.on 'error', initialErrorHandler
+    @connection.on 'error',   @_connectedCallback
+    @connection.on 'close',   @_connectedCallback
+    @connection.on 'timeout', @_connectedCallback
 
     @connection.on 'connect', =>
-      @connection.removeListener 'error', initialErrorHandler
       @connected = true
-      @_bindEventListeners()
 
       if @connectionOptions.ssl
         @_writeMessage(new FrontendMessage.SSLRequest)
@@ -50,17 +58,15 @@ class Connection extends EventEmitter
                 conn.end()
                 @disconnect()
                 err = new errors.SSLError(conn.authorizationError)
-                if @connectedCallback then @connectedCallback(err) else @emit 'error', err
+                @_connectedCallback(err)
               else
                 @emit 'warn', conn.authorizationError unless conn.authorized
                 @connection = conn
-                @_bindEventListeners()
                 @_handshake()
           else if @connectionOptions.ssl == "optional"
             @_handshake()
           else
-            err = new errors.SSLError("The server does not support SSL connection")
-            if @connectedCallback then @connectedCallback(err) else @emit 'error', err
+            @_connectedCallback(new errors.SSLError("The server does not support SSL connection"))
 
       else
         @_handshake()
@@ -117,7 +123,7 @@ class Connection extends EventEmitter
   _handshake: ->
     authenticationFailureHandler = (err) =>
       err = new errors.AuthenticationError(err)
-      if @connectedCallback then @connectedCallback(err) else @emit 'error', err
+      @_connectedCallback(err)
 
     authenticationHandler = (msg) =>
       switch msg.method
@@ -132,6 +138,12 @@ class Connection extends EventEmitter
 
         else
           throw new errors.ClientStateError("Authentication method #{msg.method} not supported.")
+
+    @connection.removeListener 'error',   @_connectedCallback
+    @connection.removeListener 'close',   @_connectedCallback
+    @connection.removeListener 'timeout', @_connectedCallback
+
+    @_bindEventListeners()
 
     @connection.on 'data', @_onData.bind(this)
     @_writeMessage(new FrontendMessage.Startup(@connectionOptions.user, @connectionOptions.database))
@@ -157,7 +169,7 @@ class Connection extends EventEmitter
 
     chain = @_initializationSuccess.bind(this)
     for initializer in initializers
-      chain = initializer.bind(this, chain, @_initializationFailure.bind(this))
+      chain = initializer.bind(this, chain, @_connectedCallback)
 
     chain()
 
@@ -187,11 +199,7 @@ class Connection extends EventEmitter
   _initializationSuccess: ->
     @on 'ReadyForQuery', @_processJobQueue.bind(this)
     @_processJobQueue()
-    @connectedCallback(null, this) if @connectedCallback
-
-  _initializationFailure: (err) ->
-    if @connectedCallback then @connectedCallback(err) else @emit 'error', err
-
+    @_connectedCallback()
 
   _onData: (buffer) ->
     # Append the new data with the previous buffer's residue if there was any.
@@ -243,9 +251,13 @@ class Connection extends EventEmitter
     @currentJob = false
     @emit 'error', error
 
-  _writeMessage: (msg, callback) ->
-    console.log '=>', msg.__proto__.constructor.name, msg if @debug
-    @connection.write(msg.toBuffer(), null, callback)
+  _writeMessage: (msg) ->
+    console.log '=>', msg.constructor.name, msg if @debug
+    try
+      @connection.write(msg.toBuffer(), null) 
+    catch e
+      @connection.emit 'error', e
+
 
   isInterruptible: ->
     @sessionID?

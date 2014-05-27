@@ -31,6 +31,23 @@ describe 'Vertica.connect', ->
       assert.ok connection.connected
       
 
+  it "should not crash when disconnecting before the connection succeeds", (done) ->
+    c = Vertica.connect connectionInfo, (err) ->
+      assert.ok err?, "Connecting should fail when it is disconnected immediately"
+      done()
+
+    c.disconnect()
+
+
+  it "should not crash when disconnecting twice", (done) ->
+    Vertica.connect connectionInfo, (err, connection) ->
+      return done(err) if err?
+      
+      connection.disconnect()
+      connection.disconnect()
+      done()
+
+    
   it "should fail to connect to an invalid host", (done) ->
     connectionInfo.host = 'fake'
     Vertica.connect connectionInfo, (err) ->
