@@ -169,7 +169,7 @@ class Connection extends EventEmitter
 
     chain = @_initializationSuccess.bind(this)
     for initializer in initializers
-      chain = initializer.bind(this, chain, @_connectedCallback.bind(this))
+      chain = initializer.bind(this, chain, @_connectedCallback)
 
     chain()
 
