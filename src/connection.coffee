@@ -18,6 +18,7 @@ class Connection extends EventEmitter
     @connected = false
     @busy      = true
     @queue     = []
+    @timeouttimeout = false
 
     @parameters = {}
     @key = null
@@ -26,17 +27,51 @@ class Connection extends EventEmitter
 
     @incomingData = new Buffer(0)
 
+  reset: () ->
+    if @connection && (@connection.connected || @connection.connecting)
+      #console.log "reset also conenction"
+      @disconnect()
+      @connection.destroy();
+    @connected = false
+    @transactionStatus = null
+    if @queue && @queue.length
+      @queue.splice 0,@queue.length
+    if @currentJob
+      #console.log "reset also job"
+      error = new Error("called connecttion.reset")
+      @currentJob.onConnectionError(error)
+      @currentJob = false
+      @busy = false
+     
+  initialErrorHandler: (err) =>
+    if @timeouttimeout
+      clearTimeout @timeouttimeout
+    if @connectedCallback
+      @connectedCallback(err)
+      @connectedCallback=null
+    else
+      @emit 'error', err
+
   connect: (callback) ->
     @connectedCallback = callback
     @connection = net.createConnection @connectionOptions.port, @connectionOptions.host
+    if @timeouttimeout
+      clearTimeout @timeouttimeout
+    @timeouttimeout = setTimeout => 
+        @connection.destroy();
+        @connected = false
+        error = new Error("connect ETIMEDOUT")
+        if @currentJob
+            @currentJob.onConnectionError(error)
+        @currentJob = false
+        @busy = false
+        @initialErrorHandler error
+    ,1000
 
-    initialErrorHandler = (err) =>
-      if @connectedCallback then @connectedCallback(err.message) else @emit 'error', err
-
-    @connection.on 'error', initialErrorHandler
+    @connection.on 'error', @initialErrorHandler
 
     @connection.on 'connect', =>
-      @connection.removeListener 'error', initialErrorHandler
+      clearTimeout @timeouttimeout
       @connected = true
       @_bindEventListeners()
 
@@ -50,7 +85,7 @@ class Connection extends EventEmitter
                 conn.end()
                 @disconnect()
                 err = new errors.SSLError(conn.authorizationError)
-                if @connectedCallback then @connectedCallback(err) else @emit 'error', err
+                @initialErrorHandler err
               else
                 @emit 'warn', conn.authorizationError unless conn.authorized
                 @connection = conn
@@ -60,7 +95,7 @@ class Connection extends EventEmitter
             @_handshake()
           else
             err = new errors.SSLError("The server does not support SSL connection")
-            if @connectedCallback then @connectedCallback(err) else @emit 'error', err
+            @initialErrorHandler err
 
       else
         @_handshake()
@@ -72,8 +107,9 @@ class Connection extends EventEmitter
 
   disconnect: (error) ->
     @_onError(error) if error
-    @_writeMessage(new FrontendMessage.Terminate()) if @connection.connected
-    @connection.end()
+    if @connection
+      @_writeMessage(new FrontendMessage.Terminate()) if @connection.connected
+      @connection.end()
 
 
   isSSL: ->
@@ -89,8 +125,11 @@ class Connection extends EventEmitter
     return job
 
   _runJob: (job) ->
-    throw new errors.ClientStateError("Connection is closed") unless @connected
-    throw new errors.ClientStateError("Connection is busy") if @busy
+    
+    if not @connected
+      @emit new errors.ClientStateError("Connection is closed")
+    if @busy
+      @emit new errors.ClientStateError("Connection is busy") 
 
     @busy = true
     @currentJob = job
@@ -117,7 +156,7 @@ class Connection extends EventEmitter
   _handshake: ->
     authenticationFailureHandler = (err) =>
       err = new errors.AuthenticationError(err)
-      if @connectedCallback then @connectedCallback(err) else @emit 'error', err
+      @initialErrorHandler err
 
     authenticationHandler = (msg) =>
       switch msg.method
@@ -187,10 +226,12 @@ class Connection extends EventEmitter
   _initializationSuccess: ->
     @on 'ReadyForQuery', @_processJobQueue.bind(this)
     @_processJobQueue()
-    @connectedCallback(null, this) if @connectedCallback
+    if @connectedCallback
+      @connectedCallback(null, this)
+      @connectedCallback=null
 
   _initializationFailure: (err) ->
-    if @connectedCallback then @connectedCallback(err) else @emit 'error', err
+    @initialErrorHandler err
 
 
   _onData: (buffer) ->
