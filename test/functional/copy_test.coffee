@@ -78,7 +78,7 @@ describe 'Vertica.Connection#copy', ->
       return done(err) if err?
 
       # Data handler callbackes invoked by the time this callback returns
-      assert.deepEqual callbackResults, ['data', 'success']
+      assert.deepEqual callbackResults, ['data', 'success'], 'Callbacks called out of order or not at all'
       
       verifySQL = "SELECT * FROM test_node_vertica_table ORDER BY id"
       connection.query verifySQL, (err, resultset) ->
@@ -87,7 +87,7 @@ describe 'Vertica.Connection#copy', ->
         done()
 
     # Verify data handler callbacks were not invoked immediately in the copy method
-    assert.deepEqual callbackResults, []
+    assert.deepEqual callbackResults, [], 'Callbacks called before they should be'
 
 
   if require('semver').gte(process.version, '0.10.0')

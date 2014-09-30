@@ -245,7 +245,8 @@ class Connection extends EventEmitter
 
   _writeMessage: (msg, callback) ->
     console.log '=>', msg.__proto__.constructor.name, msg if @debug
-    @connection.write(msg.toBuffer(), null, callback)
+    debugger
+    @connection.write(msg.toBuffer(), callback)
 
   isInterruptible: ->
     @sessionID?
