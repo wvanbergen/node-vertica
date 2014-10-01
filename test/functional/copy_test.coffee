@@ -66,6 +66,30 @@ describe 'Vertica.Connection#copy', ->
         assert.deepEqual resultset.rows, [[11, "Stuff"], [12, "More stuff"], [13, "Final stuff"]]
         done()
 
+
+  it "should accept callbacks in a data handler function and call them in order", (done) ->
+    callbackResults = []
+    dataHandler = (data, success, fail) ->
+      data("11|Stuff\n", -> callbackResults.push('data'))
+      success(-> callbackResults.push('success'))
+
+    copySQL = "COPY test_node_vertica_table FROM STDIN ABORT ON ERROR"
+    connection.copy copySQL, dataHandler, (err, _) ->
+      return done(err) if err?
+
+      # Data handler callbackes invoked by the time this callback returns
+      assert.deepEqual callbackResults, ['data', 'success'], 'Callbacks called out of order or not at all'
+      
+      verifySQL = "SELECT * FROM test_node_vertica_table ORDER BY id"
+      connection.query verifySQL, (err, resultset) ->
+        return done(err) if err?
+        assert.deepEqual resultset.rows, [[11, 'Stuff']]
+        done()
+
+    # Verify data handler callbacks were not invoked immediately in the copy method
+    assert.deepEqual callbackResults, [], 'Callbacks called before they should be'
+
+
   if require('semver').gte(process.version, '0.10.0')
     it "should COPY data from a stream function", (done) ->
       stream = fs.createReadStream("./test/test_node_vertica_table.csv");

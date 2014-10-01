@@ -90,9 +90,9 @@ class Query extends EventEmitter
 
   onCopyInResponse: (msg) ->
     @_handlingCopyIn = true
-    dataHandler    = (data) => @copyData(data)
-    successHandler = ()     => @copyDone()
-    failureHandler = (err)  => @copyFail(err)
+    dataHandler    = (data, callback) => @copyData(data, callback)
+    successHandler = (callback)       => @copyDone(callback)
+    failureHandler = (err, callback)  => @copyFail(err, callback)
 
     try
       copyInHandler = @_getCopyInHandler()
@@ -136,24 +136,23 @@ class Query extends EventEmitter
       stream.on 'end',   ()     -> success()
       stream.on 'error', (err)  -> fail(err)
 
-
-  copyData: (data) ->
+  copyData: (data, callback) ->
     if @_handlingCopyIn
-      @connection._writeMessage(new FrontendMessage.CopyData(data))
+      @connection._writeMessage(new FrontendMessage.CopyData(data), callback)
     else
       throw new errors.ClientStateError("Copy in mode not active!")
 
-  copyDone: () ->
+  copyDone: (callback) ->
     if @_handlingCopyIn
-      @connection._writeMessage(new FrontendMessage.CopyDone())
+      @connection._writeMessage(new FrontendMessage.CopyDone(), callback)
       @_handlingCopyIn = false
     else
       throw new errors.ClientStateError("Copy in mode not active!")
 
-  copyFail: (error) ->
+  copyFail: (error, callback) ->
     if @_handlingCopyIn
       message = error.message ? error.toString()
-      @connection._writeMessage(new FrontendMessage.CopyFail(message))
+      @connection._writeMessage(new FrontendMessage.CopyFail(message), callback)
       @_handlingCopyIn = false
     else
       throw new errors.ClientStateError("Copy in mode not active!")
