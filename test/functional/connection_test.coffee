@@ -126,29 +126,3 @@ describe 'Vertica.connect', ->
           assert err instanceof errors.QueryErrorResponse
           assert.equal err.message, 'Execution canceled by operator'
           done()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
