@@ -281,7 +281,7 @@ class Connection extends EventEmitter
           if !@_success(err, cb)
             conn.disconnect()
           else if rs.getLength() == 1 && statementID = rs.theValue()
-            bareClient.query "SELECT INTERRUPT_STATEMENT('#{@sessionID}', statementID)", (err, rs) =>
+            conn.query "SELECT INTERRUPT_STATEMENT('#{@sessionID}', #{statementID})", (err, rs) =>
               conn.disconnect()
               cb(null, rs.theValue()) if @_success(err, cb) && cb?
           else
