@@ -1,7 +1,7 @@
 Buffer = require('buffer').Buffer
 
 Buffer::writeZeroTerminatedString = (str, offset, encoding) ->
-  written = @write(str, offset, null, encoding)
+  written = @write(str, offset, encoding)
   @writeUInt8(0, offset + written)
   return written + 1
 
