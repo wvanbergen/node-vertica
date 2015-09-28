@@ -158,15 +158,23 @@ class Query extends EventEmitter
       throw new errors.ClientStateError("Copy in mode not active!")
 
   _removeAllListeners: () ->
-    @connection.removeListener 'EmptyQueryResponse', @onEmptyQueryListener
-    @connection.removeListener 'RowDescription',     @onRowDescriptionListener
-    @connection.removeListener 'DataRow',            @onDataRowListener
-    @connection.removeListener 'CommandComplete',    @onCommandCompleteListener
-    @connection.removeListener 'ErrorResponse',      @onErrorResponseListener
-    @connection.removeListener 'ReadyForQuery',      @onReadyForQueryListener
-    @connection.removeListener 'CopyInResponse',     @onCopyInResponseListener
-    @connection.removeListener 'CopyFileResponse',   @onCopyFileResponseListener
+    listeners = {
+      'EmptyQueryResponse': @onEmptyQueryListener,
+      'RowDescription': @onRowDescriptionListener,
+      'DataRow': @onDataRowListener,
+      'CommandComplete': @onCommandCompleteListener,
+      'ErrorResponse': @onErrorResponseListener,
+      'ReadyForQuery': @onReadyForQueryListener,
+      'CopyInResponse': @onCopyInResponseListener,
+      'CopyFileResponse': @onCopyFileResponseListener
+    };
 
+    `for (var key in listeners) {
+        if (typeof listeners[key] !== "undefined" && listeners[key] !== null) {
+            this.connection.removeListener(key, listeners[key])
+        }
+    }`
+    listeners
 
 class Query.Field
   constructor: (msg, customDecoders) ->
