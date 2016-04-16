@@ -88,7 +88,6 @@ exports.Time = VerticaTime
 VerticaTimestamp =
 
   fromStringBuffer: (buffer) ->
-    timezoneOffset = require('./vertica')
     timestampRegexp = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})(\.\d{1,})?(?:([\+\-])(\d{2})(?:\:(\d{2}))?)?$/
     if matches = buffer.toString('ascii').match(timestampRegexp)
       utc = Date.UTC(+matches[1], +matches[2] - 1, +matches[3], +matches[4], +matches[5], +matches[6], Math.round(+matches[7] * 1000) || 0)
