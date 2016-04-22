@@ -2,3 +2,5 @@
 .DS_Store
 /test/connection.json
 dev.coffee
+.idea
+*.iml
