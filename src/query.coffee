@@ -32,7 +32,10 @@ class Query extends EventEmitter
       @emit 'error', err
 
   onRowDescription: (msg) ->
-    throw new errors.VerticaError("Cannot handle multi-queries with a callback!") if @callback? && @status?
+    if @status && @callback
+      err = new errors.VerticaError("Cannot handle multi-queries with a callback!")
+      @error = err
+      return
 
     # custom decoders may override the default buffer decoders
     customDecoders = {}
