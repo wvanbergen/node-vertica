@@ -101,6 +101,13 @@ describe 'Vertica.Connection#query', ->
       assert.ok typeof err, 'string'
       done()
 
+    it "should return multi-queries error", (done) ->
+      sql = "SELECT 1; SELECT 1"
+      connection.query sql, (err, _) ->
+        assert.ok typeof err, 'string'
+        assert.equal err.message, "Cannot handle multi-queries with a callback!"
+        connection.query "SELECT 1", (err, _) -> done err
+
     it "should be able to reuse the connection afterwards", (done) ->
       connection.query "FAIL", (err, _) ->
         connection.query "SELECT 1", (err, resultset) ->
