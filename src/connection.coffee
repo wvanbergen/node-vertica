@@ -28,14 +28,45 @@ class Connection extends EventEmitter
 
   connect: (callback) ->
     @connectedCallback = callback
-    @connection = net.createConnection @connectionOptions.port, @connectionOptions.host
 
     initialErrorHandler = (err) =>
       if @connectedCallback then @connectedCallback(err.message) else @emit 'error', err
 
-    @connection.on 'error', initialErrorHandler
+    connect = () =>
+      redirectConn = (msg) =>
+        console.log 'Redirect to = ', msg.host, @connectionOptions.port if @debug
+        @connection.destroy()
+        @redirctedHost = msg.host
+        @connection = net.createConnection(@connectionOptions.port, msg.host)
+        @connection.on 'error', initialErrorHandler
 
-    @connection.on 'connect', =>
+        @connection.on 'connect', () =>
+          @emit 'connect'
+
+      @connection = net.createConnection @connectionOptions.port, @connectionOptions.host
+
+      @connection.on 'error', initialErrorHandler
+
+      @connection.on 'connect', () =>
+        if @connectionOptions.loadBalance
+          @connection.removeListener 'error', initialErrorHandler
+          @_bindEventListeners()
+
+          @connection.once 'data', (buffer) =>
+            if buffer.toString('ascii') == 'N'
+              console.log "Connection load balancing is turned OFF on server" if @debug
+              @emit 'connect'
+            else
+              size = buffer.readUInt32BE(1)
+              message = BackendMessage.fromBuffer(buffer.slice(0, size + 1))
+              redirectConn message
+
+          @_writeMessage new FrontendMessage.ConnectionLoadBalance()
+
+        else
+          @emit 'connect'
+
+    @on 'connect', =>
       @connection.removeListener 'error', initialErrorHandler
       @connected = true
       @_bindEventListeners()
@@ -64,6 +95,10 @@ class Connection extends EventEmitter
 
       else
         @_handshake()
+
+    connect()
+
+    @connection
 
   _bindEventListeners: ->
     @connection.once 'close',   @_onClose.bind(this)

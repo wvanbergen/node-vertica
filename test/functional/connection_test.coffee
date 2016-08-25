@@ -71,6 +71,79 @@ describe 'Vertica.connect', ->
         assert.equal err.message, 'The connection was closed.'
         done()
 
+  describe 'Connection Load Balancing', ->
+    origLoadBalancingPolicy = ''
+
+    beforeEach (done) ->
+      if !fs.existsSync('./test/connection.json')
+        throw new Error("Create test/connection.json to run functional tests")
+      else
+        connectionInfo = JSON.parse(fs.readFileSync('./test/connection.json'))
+        Vertica.connect connectionInfo, (err, connection) ->
+          assert.equal err, null
+          assert.ok !connection.busy
+          assert.ok connection.connected
+
+          connection.query "SELECT GET_LOAD_BALANCE_POLICY()", (err, resultset) ->
+            assert.ok resultset instanceof Vertica.Resultset
+            assert.ok resultset.rows.length == 1
+            origLoadBalancingPolicy = resultset.rows[0][0]
+            done()
+
+    it "should connect even when load balancing is truned OFF", (done) ->
+      Vertica.connect connectionInfo, (err, connection) ->
+        assert.equal err, null
+        assert.ok !connection.busy
+        assert.ok connection.connected
+
+        connection.query "SELECT SET_LOAD_BALANCE_POLICY('NONE')", (err, resultset) ->
+          assert.equal err, null
+
+          connectionInfo.loadBalance = true
+          Vertica.connect connectionInfo, (err, conn) ->
+            assert.equal err, null
+            assert.ok !conn.busy
+            assert.ok conn.connected
+
+          done()
+
+        assert.ok connection.busy
+        assert.ok connection.connected
+
+    it "should connect to different host at least once", (done) ->
+      Vertica.connect connectionInfo, (err, connection) ->
+        assert.equal err, null
+        assert.ok !connection.busy
+        assert.ok connection.connected
+
+        connection.query "SELECT SET_LOAD_BALANCE_POLICY('ROUNDROBIN')", (err, resultset) ->
+          assert.equal err, null
+
+          connectionInfo.loadBalance = true
+          Vertica.connect connectionInfo, (err, conn) ->
+            assert.equal err, null
+            assert.ok !conn.busy
+            assert.ok conn.connected
+            if connectionInfo.host == conn.redirctedHost
+              Vertica.connect connectionInfo, (err, conn) ->
+                assert.equal err, null
+                assert.ok !conn.busy
+                assert.ok conn.connected
+                assert.notEqual conn.redirctedHost, connectionInfo.host
+
+          done()
+
+        assert.ok connection.busy
+        assert.ok connection.connected
+
+    afterEach (done) ->
+      Vertica.connect connectionInfo, (err, connection) ->
+        return done(err) if err?
+
+        connection.query "SELECT SET_LOAD_BALANCE_POLICY('" + origLoadBalancingPolicy + "')", (err, rs) ->
+          return done(err) if err?
+          done()
+
   describe 'Statement interruption', ->
     beforeEach (done) ->
       if !fs.existsSync('./test/connection.json')

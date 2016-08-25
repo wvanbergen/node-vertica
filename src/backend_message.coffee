@@ -10,6 +10,12 @@ class BackendMessage
   read: (buffer) ->
     # Implement me in subclass
 
+class BackendMessage.ConnectionLoadBalanceResponse extends BackendMessage
+  typeId: 89
+
+  read: (buffer) ->
+    this.host = buffer.toString('ascii', 4, buffer.length - 1)
+
 
 class BackendMessage.Authentication extends BackendMessage
   typeId: 82 # R

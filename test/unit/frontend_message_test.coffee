@@ -4,6 +4,12 @@ Buffer          = require('../../src/buffer').Buffer
 FrontendMessage = require('../../src/frontend_message')
 Authentication  = require('../../src/authentication')
 
+describe "FrontendMessage.ConnectionLoadBalance", ->
+  it "should encode the message correctly", ->
+    topic = new FrontendMessage.ConnectionLoadBalance
+    reference = new Buffer([0x0, 0x0, 0x0, 0x8, 0x4, 0xD3, 0x0, 0x0])
+    assert.deepEqual topic.toBuffer(), reference
+
 describe "FrontendMessage.Startup", ->
   it "should hold the message's information", ->
     topic = new FrontendMessage.Startup('username', 'database')

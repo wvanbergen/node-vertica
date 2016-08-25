@@ -2,6 +2,12 @@ assert         = require 'assert'
 BackendMessage = require('../../src/backend_message')
 Buffer         = require('../../src/buffer').Buffer
 
+describe 'BackendMessage.ConnectionLoadBalanceResponse', ->
+  it "should read a message correctly", ->
+    message = BackendMessage.fromBuffer(new Buffer([0x59, 0x00, 0x00, 0x00, 0x15, 0x00, 0x00, 0x15, 0x39, 0x31, 0x39, 0x32, 0x2e, 0x31, 0x36, 0x38, 0x2e, 0x31, 0x2e, 0x33, 0x39, 0x00]))
+    assert.ok message instanceof BackendMessage.ConnectionLoadBalanceResponse
+    assert.equal message.host, '192.168.1.39'
+
 describe 'BackendMessage.Authentication', ->
   it "should read a message correctly", ->
     message = BackendMessage.fromBuffer(new Buffer([0x52, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00]))

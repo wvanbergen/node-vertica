@@ -33,6 +33,13 @@ class FrontendMessage
 
     return messageBuffer
 
+class FrontendMessage.ConnectionLoadBalance extends FrontendMessage
+  typeId: null
+
+  payload: ->
+    arr = [0x0, 0x0, 0x0, 0x8, 0x4, 0xd3, 0x0, 0x0]
+    pl = new Buffer(arr)
+    pl.slice 4
 
 class FrontendMessage.Startup extends FrontendMessage
   typeId: null
