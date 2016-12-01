@@ -1,6 +1,6 @@
 {
   "name": "vertica",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "description": "Pure Javascript client library for Vertica",
   "keywords": ["database", "vertica", "sql"],
   "author": "Willem van Bergen <willem@railsdoctors.com>",

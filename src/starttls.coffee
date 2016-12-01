@@ -1,6 +1,6 @@
 
 module.exports = (socket, options, cb) ->
-  sslcontext = require('crypto').createCredentials(options)
+  sslcontext = require('tls').createSecureContext(options)
   pair       = require('tls').createSecurePair(sslcontext, false)
   cleartext  = pipe(pair, socket)
 
