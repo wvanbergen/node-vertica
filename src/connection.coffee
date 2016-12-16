@@ -11,9 +11,10 @@ errors          = require('./errors')
 class Connection extends EventEmitter
 
   constructor: (@connectionOptions) ->
-    @connectionOptions.host   ?= 'localhost'
-    @connectionOptions.port   ?= 5433
-    @connectionOptions.ssl    ?= 'optional'
+    @connectionOptions.host        ?= 'localhost'
+    @connectionOptions.port        ?= 5433
+    @connectionOptions.ssl         ?= 'optional'
+    @connectionOptions.keepAlive   ?= false
 
     @connected = false
     @busy      = true
@@ -39,6 +40,9 @@ class Connection extends EventEmitter
       @connection.removeListener 'error', initialErrorHandler
       @connected = true
       @_bindEventListeners()
+
+      if @connectionOptions.keepAlive
+        @connection.setKeepAlive true
 
       if @connectionOptions.ssl
         @_writeMessage(new FrontendMessage.SSLRequest)
