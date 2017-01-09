@@ -1,6 +1,6 @@
 # node-vertica [![Build Status](https://travis-ci.org/wvanbergen/node-vertica.png?branch=travis)](https://travis-ci.org/wvanbergen/node-vertica)
 
-> WARNING: this library is not maintained. 
+> WARNING: this library is not maintained.
 
 A pure javascript library to connect to a Vertica database. Except that it is written in CoffeeScript.
 
@@ -33,6 +33,7 @@ options are supported.
 - `initializer`: a callback function that gets called after connection but before any query
   gets executed.
 - `decoders`: an object containing custom buffer decoders for query result field deserialization, see usage in custom decoders test.
+- `keepAlive`: Enable/disable tcp keep-alive functionality (default: false).
 
 ```coffeescript
 
