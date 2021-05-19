@@ -7,6 +7,7 @@ errors          = require('./errors')
 class Query extends EventEmitter
 
   constructor: (@connection, @sql, @callback) ->
+    super()
     @_handlingCopyIn = false
 
   run: () ->
@@ -56,12 +57,19 @@ class Query extends EventEmitter
     @emit 'fields', @fields
 
   onDataRow: (msg) ->
-    row = []
-    for value, index in msg.values
-      row.push if value? then @fields[index].decoder(value) else null
+    try
+      row = []
+      for value, index in msg.values
+        row.push if value? then @fields[index].decoder(value) else null
 
-    @rows.push row if @callback
-    @emit 'row', row
+      @rows.push row if @callback
+      @emit 'row', row
+    catch err
+      if @callback
+        @error = err.message
+      else
+        @emit 'error', err.message
+
 
   onReadyForQuery: (msg) ->
     @_removeAllListeners()
