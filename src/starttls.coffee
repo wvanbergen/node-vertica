@@ -1,22 +1,46 @@
-
+# Supporting 0.11+ and beyond environment
 module.exports = (socket, options, cb) ->
-  sslcontext = require('tls').createSecureContext(options)
-  pair       = require('tls').createSecurePair(sslcontext, false)
-  cleartext  = pipe(pair, socket)
+  tls = require('tls')
+  secureContext = tls.createSecureContext(options)
 
-  pair.on 'secure', ->
-    verifyError = pair.ssl.verifyError()
+  if tls.TLSSocket
+    secureSocket = new tls.TLSSocket(socket, { isServer: false, secureContext })
+  else
+    pair = tls.createSecurePair(sslcontext, false)
+    secureSocket = pipe(pair, socket)
+
+  secureSocket.on 'secure', ->
+    verifyError = secureSocket.ssl.verifyError()
 
     if verifyError
-      cleartext.authorized = false
-      cleartext.authorizationError = verifyError
+      secureSocket.authorized = false
+      secureSocket.authorizationError = verifyError
     else
-      cleartext.authorized = true
+      secureSocket.authorized = true
 
     cb() if cb
+  
+  secureSocket.authorized = false
+  secureSocket._controlReleased = true
 
-  cleartext._controlReleased = true
-  return cleartext;
+  onError = (e) ->
+    secureSocket.emit('error', e) if (secureSocket._controlReleased)
+
+  onClose = ->
+    socket.removeListener('error', onError)
+    socket.removeListener('close', onClose)
+
+  socket.on 'error', onError
+  socket.on 'close', onClose
+
+  if tls.TLSSocket
+
+    secureSocket.on '_tlsError', (e) =>
+      console.log '_tlsError', e
+
+    secureSocket._start();
+
+  return secureSocket;
 
 
 pipe = (pair, socket) =>
@@ -27,16 +51,5 @@ pipe = (pair, socket) =>
   cleartext = pair.cleartext
   cleartext.socket = socket
   cleartext.encrypted = pair.encrypted
-  cleartext.authorized = false
-
-  onError = (e) ->
-    cleartext.emit('error', e) if (cleartext._controlReleased)
-
-  onClose = ->
-    socket.removeListener('error', onError)
-    socket.removeListener('close', onClose)
-
-  socket.on 'error', onError
-  socket.on 'close', onClose
 
   return cleartext
