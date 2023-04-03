@@ -20,6 +20,7 @@ exports.typeOIDs =
   16:   "numeric"
   25:   "string"
   1043: "string"
+  1082: "date"
   20:   "integer"
   21:   "integer"
   23:   "integer"
