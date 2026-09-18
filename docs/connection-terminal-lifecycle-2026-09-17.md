@@ -36,3 +36,28 @@ Changes belong in `src/connection.coffee` and `src/query.coffee`, with regenerat
 The test scripts invoke Mocha's runner directly because its old launcher exited without running tests on the current Node version.
 
 This patch has not received live-database validation, been pushed, or been adopted by `protobi-sql`. It does not claim to fix every COPY source-stream failure or provide database-wide session budgeting. Live recovery validation and application integration remain separate gates.
+
+## Follow-up: COPY source listener cleanup
+
+COPY now detaches its source data/end/error listeners on CopyDone, CopyFail,
+server rejection, ReadyForQuery, or connection failure. Captured listeners also
+check COPY state, so an event emission already in progress cannot resume a
+terminated transfer. Cleanup is idempotent and clears its query-held closure.
+
+Caller-supplied streams are paused, not destroyed, and their existing listeners
+are preserved. Callers retain ownership, including handling future stream errors
+and disposing of streams they abandon. File streams opened by the driver are
+destroyed; a temporary error listener covers pending file reads until close and
+then removes itself without retaining the query.
+
+Validation: all 102 unit tests pass. Live Vertica tests independently exercised
+source failure before data, failure after sending data, and server rejection of
+invalid input. Each failed COPY detached its listeners, allowed ROLLBACK, left
+zero rows, and accepted a subsequent three-row COPY on the same connection.
+Tests used session-local temporary tables; no existing table was changed.
+An initial combined test failed an assertion between scenarios; the isolated
+checks above establish per-scenario recovery, not repeated-cycle validation.
+Live SELECT-only checks also passed graceful disconnect and forced destruction
+with active/queued queries, confirmed socket closure, and replacement connections.
+
+The driver changes remain local and are not yet adopted by protobi-sql.

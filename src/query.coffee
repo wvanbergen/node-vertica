@@ -87,6 +87,7 @@ class Query extends EventEmitter
     @emit 'end', msg.status
 
   onErrorResponse: (msg) ->
+    @_stopCopyIn()
     err = new errors.QueryErrorResponse(msg)
     if @callback
       @error = err
@@ -130,7 +131,7 @@ class Query extends EventEmitter
       existsSync = fs.existsSync || require('path').existsSync
       if existsSync(@copyInSource)
         stream = fs.createReadStream(@copyInSource)
-        @_getStreamCopyInHandler(stream)
+        @_getStreamCopyInHandler(stream, true)
       else
         throw new errors.ClientStateError("Could not find local file #{@copyInSource}.")
 
@@ -145,11 +146,33 @@ class Query extends EventEmitter
       throw new errors.ClientStateError("No copy in handler defined to handle the COPY statement.")
 
 
-  _getStreamCopyInHandler: (stream) ->
-    (transfer, success, fail) ->
-      stream.on 'data',  (data) -> transfer(data)
-      stream.on 'end',   ()     -> success()
-      stream.on 'error', (err)  -> fail(err)
+  _getStreamCopyInHandler: (stream, owned = false) ->
+    (transfer, success, fail) =>
+      onData = (data) => transfer(data) if @_handlingCopyIn
+      onEnd = => success() if @_handlingCopyIn
+      onError = (err) => fail(err) if @_handlingCopyIn
+      @_copySourceCleanup = ->
+        stream.removeListener 'data', onData
+        stream.removeListener 'end', onEnd
+        stream.removeListener 'error', onError
+        stream.pause() if typeof stream.pause == 'function'
+        if owned and !stream.closed
+          # A pending file read can still emit an error while destroy closes it.
+          # Retain no query reference and remove this guard on confirmed close.
+          ignoreError = ->
+          stream.on 'error', ignoreError
+          stream.once 'close', -> stream.removeListener 'error', ignoreError
+          stream.destroy()
+      # Attach terminal listeners before data can start flowing.
+      stream.on 'error', onError
+      stream.on 'end', onEnd
+      stream.on 'data', onData
+
+  _stopCopyIn: ->
+    @_handlingCopyIn = false
+    cleanup = @_copySourceCleanup
+    @_copySourceCleanup = null
+    cleanup() if cleanup
 
   copyData: (data, callback) ->
     if @_handlingCopyIn
@@ -159,20 +182,21 @@ class Query extends EventEmitter
 
   copyDone: (callback) ->
     if @_handlingCopyIn
+      @_stopCopyIn()
       @connection._writeMessage(new FrontendMessage.CopyDone(), callback)
-      @_handlingCopyIn = false
     else
       throw new errors.ClientStateError("Copy in mode not active!")
 
   copyFail: (error, callback) ->
     if @_handlingCopyIn
       message = error.message ? error.toString()
+      @_stopCopyIn()
       @connection._writeMessage(new FrontendMessage.CopyFail(message), callback)
-      @_handlingCopyIn = false
     else
       throw new errors.ClientStateError("Copy in mode not active!")
 
   _removeAllListeners: () ->
+    @_stopCopyIn()
     @connection.removeListener 'EmptyQueryResponse', @onEmptyQueryListener if @onEmptyQueryListener
     @connection.removeListener 'RowDescription',     @onRowDescriptionListener if @onRowDescriptionListener
     @connection.removeListener 'DataRow',            @onDataRowListener if @onDataRowListener
