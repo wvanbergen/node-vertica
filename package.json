@@ -1,8 +1,12 @@
 {
   "name": "vertica",
-  "version": "0.5.7",
+  "version": "0.6.0",
   "description": "Pure Javascript client library for Vertica",
-  "keywords": ["database", "vertica", "sql"],
+  "keywords": [
+    "database",
+    "vertica",
+    "sql"
+  ],
   "author": "Willem van Bergen <willem@railsdoctors.com>",
   "licenses": [
     {
@@ -32,7 +36,9 @@
     "src": "./src",
     "test": "./test"
   },
-  "engine": { "node" : ">= 0.8" },
+  "engine": {
+    "node": ">= 0.8"
+  },
   "scripts": {
     "prepublish": "cake clean && cake build",
     "test": "node ./node_modules/mocha/bin/_mocha --compilers coffee:coffee-script/register test/**/*.coffee test/unit/*.js",
