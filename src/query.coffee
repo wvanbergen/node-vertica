@@ -72,6 +72,8 @@ class Query extends EventEmitter
 
 
   onReadyForQuery: (msg) ->
+    return if @_completed
+    @_completed = true
     @_removeAllListeners()
     if @callback
       process.nextTick =>
@@ -92,11 +94,13 @@ class Query extends EventEmitter
       @emit 'error', err
 
   onConnectionError: (msg) ->
+    return if @_completed
+    @_completed = true
     @_removeAllListeners()
     if @callback
       process.nextTick => @callback(msg)
     else
-      @emit 'error', msg
+      process.nextTick => @emit 'error', msg
 
 
   onCopyInResponse: (msg) ->
@@ -169,14 +173,14 @@ class Query extends EventEmitter
       throw new errors.ClientStateError("Copy in mode not active!")
 
   _removeAllListeners: () ->
-    @connection.removeListener 'EmptyQueryResponse', @onEmptyQueryListener
-    @connection.removeListener 'RowDescription',     @onRowDescriptionListener
-    @connection.removeListener 'DataRow',            @onDataRowListener
-    @connection.removeListener 'CommandComplete',    @onCommandCompleteListener
-    @connection.removeListener 'ErrorResponse',      @onErrorResponseListener
-    @connection.removeListener 'ReadyForQuery',      @onReadyForQueryListener
-    @connection.removeListener 'CopyInResponse',     @onCopyInResponseListener
-    @connection.removeListener 'CopyFileResponse',   @onCopyFileResponseListener
+    @connection.removeListener 'EmptyQueryResponse', @onEmptyQueryListener if @onEmptyQueryListener
+    @connection.removeListener 'RowDescription',     @onRowDescriptionListener if @onRowDescriptionListener
+    @connection.removeListener 'DataRow',            @onDataRowListener if @onDataRowListener
+    @connection.removeListener 'CommandComplete',    @onCommandCompleteListener if @onCommandCompleteListener
+    @connection.removeListener 'ErrorResponse',      @onErrorResponseListener if @onErrorResponseListener
+    @connection.removeListener 'ReadyForQuery',      @onReadyForQueryListener if @onReadyForQueryListener
+    @connection.removeListener 'CopyInResponse',     @onCopyInResponseListener if @onCopyInResponseListener
+    @connection.removeListener 'CopyFileResponse',   @onCopyFileResponseListener if @onCopyFileResponseListener
 
 
 class Query.Field

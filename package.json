@@ -35,6 +35,7 @@
   "engine": { "node" : ">= 0.8" },
   "scripts": {
     "prepublish": "cake clean && cake build",
-    "test": "./node_modules/mocha/bin/mocha --compilers coffee:coffee-script/register test/**/*.coffee"
+    "test": "node ./node_modules/mocha/bin/_mocha --compilers coffee:coffee-script/register test/**/*.coffee test/unit/*.js",
+    "test:unit": "node ./node_modules/mocha/bin/_mocha --compilers coffee:coffee-script/register test/unit/*.coffee test/unit/*.js"
   }
 }

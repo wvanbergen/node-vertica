@@ -17,6 +17,8 @@ class Connection extends EventEmitter
     @connectionOptions.keepAlive   ?= false
 
     @connected = false
+    @closing = false
+    @closed = false
     @busy      = true
     @queue     = []
 
@@ -32,11 +34,13 @@ class Connection extends EventEmitter
     @connection = net.createConnection @connectionOptions.port, @connectionOptions.host
 
     initialErrorHandler = (err) =>
-      if @connectedCallback then @connectedCallback(err.message) else @emit 'error', err
+      @_onError(err)
 
+    @connection.once 'close', @_onClose.bind(this)
     @connection.on 'error', initialErrorHandler
 
     @connection.on 'connect', =>
+      return if @closing
       @connection.removeListener 'error', initialErrorHandler
       @connected = true
       @_bindEventListeners()
@@ -54,7 +58,7 @@ class Connection extends EventEmitter
                 conn.end()
                 @disconnect()
                 err = new errors.SSLError(conn.authorizationError)
-                if @connectedCallback then @connectedCallback(err) else @emit 'error', err
+                @_initializationFailure(err)
               else
                 @emit 'warn', conn.authorizationError unless conn.authorized
                 @connection = conn
@@ -64,26 +68,58 @@ class Connection extends EventEmitter
             @_handshake()
           else
             err = new errors.SSLError("The server does not support SSL connection")
-            if @connectedCallback then @connectedCallback(err) else @emit 'error', err
+            @_initializationFailure(err)
 
       else
         @_handshake()
 
   _bindEventListeners: ->
-    @connection.once 'close',   @_onClose.bind(this)
+    @connection.once 'close',   @_onClose.bind(this) if @connection.encrypted
     @connection.once 'error',   @_onError.bind(this)
     @connection.once 'timeout', @_onTimeout.bind(this)
 
   disconnect: (error) ->
-    @_onError(error) if error
-    @_writeMessage(new FrontendMessage.Terminate()) if @connection.connected
-    @connection.end()
+    return if @closing
+    wasConnected = @connected
+    @closing = true
+    @connected = false
+    try
+      @_writeMessage(new FrontendMessage.Terminate()) if wasConnected
+    finally
+      @connection.end() if @connection
+      @_failJobs(error ? new errors.ConnectionError("The connection was closed."))
 
+  # Abort an abandoned operation without waiting for the server to finish it.
+  # The close event, not this call, confirms that the transport has closed.
+  destroy: (error) ->
+    @closing = true
+    @connected = false
+    @connection.destroy() if @connection
+    @_failJobs(error ? new errors.ConnectionError("The connection was closed."))
+
+  _finishConnect: (err) ->
+    callback = @connectedCallback
+    @connectedCallback = null
+    if callback
+      callback(err, if err then null else this)
+      return true
+    false
+
+  _failJobs: (error) ->
+    jobs = @queue.splice(0)
+    jobs.unshift(@currentJob) if @currentJob
+    @currentJob = false
+    @busy = false
+    # Mark jobs terminal immediately; each job defers its user notification.
+    job.onConnectionError(error) for job in jobs
 
   isSSL: ->
     @connection.pair? && @connection.encrypted?
 
   _scheduleJob: (job) ->
+    if @closing
+      process.nextTick -> job.onConnectionError(new errors.ConnectionError("The connection was closed."))
+      return job
     if @busy
       @queue.push job
       @emit 'queuejob', job
@@ -102,6 +138,7 @@ class Connection extends EventEmitter
     return job
 
   _processJobQueue: () ->
+    return if @closing
     if @queue.length > 0
       @_runJob(@queue.shift())
     else
@@ -121,7 +158,7 @@ class Connection extends EventEmitter
   _handshake: ->
     authenticationFailureHandler = (err) =>
       err = new errors.AuthenticationError(err)
-      if @connectedCallback then @connectedCallback(err) else @emit 'error', err
+      @_initializationFailure(err)
 
     authenticationHandler = (msg) =>
       switch msg.method
@@ -146,6 +183,7 @@ class Connection extends EventEmitter
     @on   'BackendKeyData',  (msg) => [@pid, @key] = [msg.pid, msg.key]
 
     @on   'ReadyForQuery', (msg) =>
+      return if @closing
       @busy = false
       @currentJob = false
       @transactionStatus = msg.transactionStatus
@@ -189,12 +227,14 @@ class Connection extends EventEmitter
       next()
 
   _initializationSuccess: ->
+    return if @closing
     @on 'ReadyForQuery', @_processJobQueue.bind(this)
     @_processJobQueue()
-    @connectedCallback(null, this) if @connectedCallback
+    @_finishConnect(null)
 
   _initializationFailure: (err) ->
-    if @connectedCallback then @connectedCallback(err) else @emit 'error', err
+    @destroy(err)
+    @emit 'error', err unless @_finishConnect(err)
 
 
   _onData: (buffer) ->
@@ -229,23 +269,25 @@ class Connection extends EventEmitter
     undefined
 
   _onClose: () ->
+    return if @closed
+    @closed = true
+    @closing = true
     @connected = false
     error = new errors.ConnectionError("The connection was closed.")
-    @currentJob.onConnectionError(error) if @currentJob
-    @currentJob = false
+    @_failJobs(error)
+    @_finishConnect(error)
     @emit 'close'
 
   _onTimeout: () ->
     error = new errors.ConnectionError("The connection timed out.")
-    @currentJob.onConnectionError(error) if @currentJob
-    @currentJob = false
+    @destroy(error)
+    @_finishConnect(error)
     @emit 'timeout'
 
   _onError: (err) ->
     error = new errors.ConnectionError(err.message ? err.toString())
-    @currentJob.onConnectionError(error) if @currentJob
-    @currentJob = false
-    @emit 'error', error
+    @destroy(error)
+    @emit 'error', error unless @_finishConnect(error)
 
   _writeMessage: (msg, callback) ->
     console.log '=>', msg.__proto__.constructor.name, msg if @debug
